@@ -81,16 +81,15 @@ st.divider()
 # TABS
 # ============================================================
 
-table_tab,platform_tab, analytics_tab,coverage_overview_tab, coverage_board_tab = st.tabs(
+table_tab,platform_tab, analytics_tab,coverage_overview_tab, coverage_matrix_grouped_tab = st.tabs(
     [
         "Execution Records",
         "Platform View",
         "Analytics",
-        "COverage",
-        "Coverage Board"
+        "Coverage Overview",
+        "Graph Grouped"
     ]
 )
-
 # ============================================================
 # TAB 1 — EXECUTION RECORDS
 # ============================================================
@@ -310,7 +309,7 @@ with table_tab:
                     st.rerun()
 
             st.divider()
-
+        
 # ============================================================
 # TAB 2 — PLATFORM VIEW
 # ============================================================
@@ -626,11 +625,22 @@ with coverage_overview_tab:
     # Coverage by Form Factor
     # =============================
 
+    # =============================
+    # Coverage by Form Factor
+    # =============================
+
     st.subheader("Coverage by Form Factor")
+
+    # force categorical
+    coverage_df["Form Factor"] = coverage_df["Form Factor"].astype(str)
+
+    # optional fixed order
+    ff_order = ["2230", "2242", "2280"]
 
     ff = (
         coverage_df.groupby("Form Factor")
         .size()
+        .reindex(ff_order, fill_value=0)
         .reset_index(name="Count")
     )
 
@@ -638,12 +648,13 @@ with coverage_overview_tab:
         ff,
         x="Form Factor",
         y="Count",
-        color="Count"
+        color="Count",
+        category_orders={"Form Factor": ff_order}
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_xaxes(type="category")
 
-    st.divider()
+    st.plotly_chart(fig, use_container_width=True)
 
     # =============================
     # Coverage by OEM
@@ -693,74 +704,110 @@ with coverage_overview_tab:
 
     st.subheader("Detailed Coverage Table")
     st.dataframe(coverage_df, use_container_width=True)
+      
     
 # ============================================================
-# COVERAGE BOARD (FULL OVERVIEW)
+# GROUPED COVERAGE MATRIX (OEM × CATEGORY × TEST)
 # ============================================================
 
-with coverage_board_tab:
+with coverage_matrix_grouped_tab:
 
-    st.subheader("Test Coverage Board")
+    st.subheader("OEM Coverage Matrix")
 
-    board = (
-        filtered_df
-        .groupby(["Platform","Test Category"])
-        .agg(Result=("Result","last"))
-        .reset_index()
+    df2 = filtered_df.copy()
+
+    df2["Config"] = (
+        df2["Capacity"].astype(str)
+        + "-"
+        + df2["Form Factor"].astype(str)
     )
 
-    pivot = board.pivot(
-        index="Platform",
-        columns="Test Category",
-        values="Result"
+    def build_card(group):
+
+        group = group.sort_values(
+            "Execution Date",
+            ascending=False
+        )
+
+        cards = []
+
+        for _, r in group.iterrows():
+
+            color = "#1f7a1f" if r["Result"]=="PASS" else "#b30000"
+            cfg = f"{r['Capacity']}-{r['Form Factor']}"
+
+            card = (
+                f'<div class="card" style="background:{color};">'
+                f'<b>{r["Result"]}</b> {r["Firmware"]}<br>'
+                f'{cfg}'
+                f'</div>'
+            )
+
+            cards.append(card)
+
+        return (
+            '<div class="card-stack">'
+            + ''.join(cards) +
+            '</div>'
+        )
+
+    cell_df = (
+        df2
+        .groupby([
+            "OEM",
+            "Platform",
+            "Test Category",
+            "Test Name"
+        ])
+        .apply(build_card)
+        .reset_index(name="Cell")
     )
 
-    def color(val):
-        if val == "PASS":
-            return "background-color: #1f7a1f; color: white"
-        if val == "FAIL":
-            return "background-color: #b30000; color: white"
-        if val == "IN_PROGRESS":
-            return "background-color: #e6b800"
-        return "background-color: #2b2b2b; color: #999"
+    pivot = cell_df.pivot(
+        index=["OEM","Platform"],
+        columns=["Test Category","Test Name"],
+        values="Cell"
+    ).fillna("")
 
-    styled = pivot.style.applymap(color)
+    # convert to html table
+    html_table = pivot.to_html(escape=False, border=0)
 
-    st.dataframe(
-        styled,
-        use_container_width=True,
-        height=700
-    )
+    st.markdown(html_table, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown("""
+        <style>
 
-    st.subheader("Cell Drilldown")
+        td {
+        vertical-align:top !important;
+        padding:2px 6px !important;
+        white-space:nowrap;
+        }
 
-    col1, col2 = st.columns(2)
+        .card-stack{
+        display:flex;
+        flex-direction:row;
+        }
 
-    platform_sel = col1.selectbox(
-        "Platform",
-        pivot.index
-    )
+        .card{
+        padding:2px 6px;
+        border-radius:4px;
+        font-size:11px;
+        color:white;
+        margin-right:-14px;
+        transition:all .2s ease;
+        }
 
-    test_sel = col2.selectbox(
-        "Test",
-        pivot.columns
-    )
+        .card-stack:hover .card{
+        margin-right:4px;
+        }
 
-    drill = filtered_df[
-        (filtered_df["Platform"] == platform_sel) &
-        (filtered_df["Test Category"] == test_sel)
-    ]
+        .card:hover{
+        transform:translateY(-2px);
+        z-index:999;
+        }
 
-    st.dataframe(
-        drill.sort_values("Execution Date", ascending=False),
-        use_container_width=True
-    )    
-    
-    
-    
-    
+        </style>
+        """, unsafe_allow_html=True)
     
 # # ============================================================
 # # COVERAGE MATRIX (EXCEL STYLE)

@@ -1,0 +1,50 @@
+context:
+  program: Vesta
+  oem: GOEM
+  firmware: AO018
+  er: null
+  platform: MSI Raider A18 HX A9WIG-082US
+execution_metadata:
+  iteration: Iteration-1
+  test_category: GOEM CTD
+platform_metadata:
+  oem: GOEM
+  host_name: GOEM06
+  model: 082US
+  processor: AMD Ryzen 9 9955HX3D
+  chipset: =[1]!Query1[[#This Row],[Chipsets]]
+  pcie_speed: Gen5
+  storage_controller: null
+  qty: 2
+  m2_slots: null
+  reference: Phase-1
+  power_mode: null
+drive_details:
+  capacity: 1TB
+  form_factor: '2242'
+  serial_number: 4567890-09878712
+  windows_version: 25H2
+  bios_enumeration: PASS
+test:
+  name: BPC+Diskercise+S4
+  result: FAIL
+  ttf_minutes: 1241
+classification:
+  severity: S1
+  failure_type: BSOD
+  failure_stage: Boot
+  reproducibility: Always
+  regression: 'Yes'
+analysis:
+  observed: kjadkfa
+  xplorer_url: kajfksa
+  jira: ''
+  jtag_analysis: ''
+  set_event_analysis: ''
+execution_id: Execution_a5204f85
+execution_date_utc: '2026-04-07T14:33:43.343677'
+history:
+- iteration: Iteration-1
+  result: FAIL
+  ttf: 1241
+  timestamp: '2026-04-07T14:33:43.343677'

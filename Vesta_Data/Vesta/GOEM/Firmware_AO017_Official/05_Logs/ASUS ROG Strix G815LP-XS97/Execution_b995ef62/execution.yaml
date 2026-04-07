@@ -1,0 +1,38 @@
+context:
+  program: Vesta
+  oem: GOEM
+  firmware: AO017
+  er: null
+  platform: ASUS ROG Strix G815LP-XS97
+execution_metadata:
+  iteration: Iteration-2
+  test_category: GOEM Power Cycle
+  run_type: Initial
+platform_metadata:
+  oem: GOEM
+  host_name: GOEM03
+  model: XS97
+  processor: Intel CORE ULTRA 9 275HX
+  chipset: =[1]!Query1[[#This Row],[Chipsets]]
+  pcie_speed: Gen5
+  storage_controller: null
+  qty: 2
+  m2_slots: null
+  reference: Phase-1
+  power_mode: null
+drive_details:
+  capacity: 1TB
+  form_factor: '2242'
+  serial_number: 4567890-09878712
+  windows_version: 25H2
+  bios_enumeration: PASS
+test:
+  name: Unsafe shutdown
+  result: PASS
+execution_id: Execution_b995ef62
+execution_date_utc: '2026-04-07T14:48:00.079252'
+history:
+- iteration: Iteration-2
+  result: PASS
+  ttf: null
+  timestamp: '2026-04-07T14:48:00.079252'

@@ -259,8 +259,8 @@ with tab2:
 
         drive_ff = st.selectbox(
             "Form Factor",
-            ["2280", "2242", "22110"],
-            index=["2280","2242","22110"].index(drive_ff)
+            ["2280", "2242", "2230"],
+            index=["2280","2242","2230"].index(drive_ff)
         )
 
     with d2:
