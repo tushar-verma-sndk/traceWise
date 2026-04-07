@@ -9,7 +9,7 @@ from modules.utils import load_config
 config = load_config()
 BASE_PATH = config["root_data_path"]
 
-st.set_page_config(page_title="Execution Dashboard", layout="wide")
+# st.set_page_config(page_title="Execution Dashboard", layout="wide")
 
 # Hide Streamlit UI
 st.markdown("""
@@ -150,6 +150,11 @@ with table_tab:
 
             if execution_id in st.session_state.expanded_rows:
                 st.session_state.expanded_rows.remove(execution_id)
+
+                # also close edit panel
+                if st.session_state.editing_id == execution_id:
+                    st.session_state.editing_id = None
+
             else:
                 st.session_state.expanded_rows.add(execution_id)
 
@@ -286,9 +291,26 @@ with table_tab:
                     value=analysis.get("observed","")
                 )
 
-                analysis["xplorer_url"] = st.text_input(
-                    "xPlorer",
+                analysis["xplorer_url"] = st.text_area(
+                    "Artifacts / Links",
                     value=analysis.get("xplorer_url","")
+                )
+
+                analysis["jira"] = st.text_input(
+                    "JIRA",
+                    value=analysis.get("jira","")
+                )
+
+                st.markdown("#### Advanced Technical Details")
+
+                analysis["jtag_analysis"] = st.text_area(
+                    "JTAG Analysis",
+                    value=analysis.get("jtag_analysis","")
+                )
+
+                analysis["set_event_analysis"] = st.text_area(
+                    "Set Event Analysis",
+                    value=analysis.get("set_event_analysis","")
                 )
 
                 yaml_data["analysis"] = analysis

@@ -5,7 +5,6 @@ from modules.execution_engine import log_execution
 from modules.mastersheet_loader import load_mastersheet
 from modules.test_registry import load_test_registry
 from modules.rerun_loader import load_last_execution
-# from modules.coverage import get_coverage
 from pathlib import Path
 
 # =============================
@@ -37,18 +36,13 @@ st.title("Platform Drop Management")
 # =============================
 # NAVBAR
 # =============================
+
 nav_col1, nav_col2 = st.columns([8, 1])
 
 with nav_col2:
-    dashboard_url = "http://localhost:8502"
-    st.markdown(
-        f'<a href="{dashboard_url}" target="_blank">'
-        '<button style="background-color:#1f77b4;color:white;'
-        'padding:8px 16px;border:none;border-radius:5px;">'
-        'Open Dashboard</button></a>',
-        unsafe_allow_html=True
-    )
-
+    if st.button("Open Dashboard"):
+        st.switch_page("pages/dashboard.py")
+        
 # =============================
 # TABS
 # =============================
@@ -451,3 +445,4 @@ with tab2:
                     st.success("FAIL execution logged successfully.")
                     st.session_state.fail_mode = False
                     st.rerun()
+                    
