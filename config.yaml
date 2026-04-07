@@ -1,0 +1,15 @@
+program_list:
+  - Vesta
+  - SHURI
+  - TESSERA
+  - THOR
+
+root_data_path: Vesta_Data
+
+oem_list:
+  - GOEM
+  - Retail
+  - HP
+  - Lenovo LBG
+  - Lenovo TBG
+  - Dell

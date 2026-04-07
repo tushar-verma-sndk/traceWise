@@ -1,0 +1,50 @@
+context:
+  program: Vesta
+  oem: GOEM
+  firmware: AO017
+  er: null
+  platform: ASUS ROG Strix SCAR 18 (2025) G835LX-XS97
+execution_metadata:
+  iteration: Iteration-4
+  test_category: GOEM CTD
+platform_metadata:
+  oem: GOEM
+  host_name: GOEM04
+  model: XS97
+  processor: Intel CORE ULTRA 9 275HX
+  chipset: =[1]!Query1[[#This Row],[Chipsets]]
+  pcie_speed: Gen5
+  storage_controller: null
+  qty: 2
+  m2_slots: null
+  reference: Phase-1
+  power_mode: null
+drive_details:
+  capacity: 1TB
+  form_factor: '2280'
+  serial_number: 6q728940q2rq78wqr
+  windows_version: 25H2
+  bios_enumeration: PASS
+test:
+  name: BPC + Heavyoad + S4
+  result: FAIL
+  ttf_minutes: 214
+classification:
+  severity: S1
+  failure_type: BSOD
+  failure_stage: Boot
+  reproducibility: Always
+  regression: 'Yes'
+analysis:
+  observed: akjsda
+  xplorer_url: http://10.207.38.166:8080/xplorer/console/ui/69a25ed00bfec7369cf823a5
+  jira: ''
+  jtag_analysis: ''
+  set_event_analysis: ''
+execution_id: Execution_4f3eed18
+execution_date_utc: '2026-04-06T12:17:51.818920'
+history:
+- iteration: Iteration-4
+  result: FAIL
+  ttf: 214
+  timestamp: '2026-04-06T12:17:51.818920'

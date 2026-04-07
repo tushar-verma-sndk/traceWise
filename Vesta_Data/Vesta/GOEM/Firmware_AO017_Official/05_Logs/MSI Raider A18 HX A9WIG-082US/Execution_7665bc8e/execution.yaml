@@ -1,0 +1,38 @@
+context:
+  program: Vesta
+  oem: GOEM
+  firmware: AO017
+  er: null
+  platform: MSI Raider A18 HX A9WIG-082US
+execution_metadata:
+  iteration: Iteration-1
+  test_category: FFU
+  run_type: Initial
+platform_metadata:
+  oem: GOEM
+  host_name: GOEM06
+  model: 082US
+  processor: AMD Ryzen 9 9955HX3D
+  chipset: =[1]!Query1[[#This Row],[Chipsets]]
+  pcie_speed: Gen5
+  storage_controller: null
+  qty: 2
+  m2_slots: null
+  reference: Phase-1
+  power_mode: null
+drive_details:
+  capacity: 512GB
+  form_factor: '2280'
+  serial_number: '45678908788889'
+  windows_version: 25H2
+  bios_enumeration: PASS
+test:
+  name: ASUS Updater
+  result: PASS
+execution_id: Execution_7665bc8e
+execution_date_utc: '2026-04-06T12:14:59.290385'
+history:
+- iteration: Iteration-1
+  result: PASS
+  ttf: null
+  timestamp: '2026-04-06T12:14:59.290385'
