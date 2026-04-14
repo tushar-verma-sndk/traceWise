@@ -1,0 +1,54 @@
+{
+  "scheduled": [
+    {
+      "platform": "ASUS ROG Strix G815LP-XS97",
+      "test_name": "BPC+IOMonkey+MS3",
+      "test_category": "GOEM CTD",
+      "iteration": "Iteration-1",
+      "sed_type": "SED",
+      "capacity": "1TB",
+      "form_factor": "2242",
+      "id": "9ffc056f",
+      "created_at": "2026-04-14T22:03:20.400004",
+      "status": "SCHEDULED"
+    },
+    {
+      "platform": "ASUS ROG Strix G815LP-XS97",
+      "test_name": "BPC + Heavyoad + S4",
+      "test_category": "GOEM CTD",
+      "iteration": "Iteration-2",
+      "sed_type": "Non-SED",
+      "capacity": "2TB",
+      "form_factor": "2230",
+      "id": "daf0cf16",
+      "created_at": "2026-04-14T22:03:20.436072",
+      "status": "SCHEDULED"
+    },
+    {
+      "platform": "Acer Predator Helios 18 AI PH 18-73",
+      "test_name": "ASUS Updater",
+      "test_category": "FFU",
+      "iteration": "Iteration-1",
+      "sed_type": "Non-SED",
+      "capacity": "512GB",
+      "form_factor": "2280",
+      "id": "134fe6a9",
+      "created_at": "2026-04-14T22:09:05.382554",
+      "status": "SCHEDULED"
+    },
+    {
+      "platform": "Acer Predator Helios 18 AI PH 18-73",
+      "test_name": "ASUS Updater",
+      "test_category": "FFU",
+      "iteration": "Iteration-1",
+      "sed_type": "Non-SED",
+      "capacity": "512GB",
+      "form_factor": "2280",
+      "id": "b17d66f0",
+      "execution_id": "SCHED_b17d66f0",
+      "created_at": "2026-04-14T22:26:08.887644",
+      "status": "IN_PROGRESS",
+      "result": "IN_PROGRESS"
+    }
+  ]
+}

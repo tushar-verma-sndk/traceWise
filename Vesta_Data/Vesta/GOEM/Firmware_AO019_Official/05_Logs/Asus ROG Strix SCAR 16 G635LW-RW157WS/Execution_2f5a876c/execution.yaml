@@ -1,0 +1,50 @@
+context:
+  program: Vesta
+  oem: GOEM
+  firmware: AO019
+  er: null
+  platform: Asus ROG Strix SCAR 16 G635LW-RW157WS
+execution_metadata:
+  iteration: Iteration-1
+  test_category: GOEM CTD
+platform_metadata:
+  oem: GOEM
+  host_name: GOEM05
+  model: RW157WS
+  processor: Intel Core Ultra 9 275HX
+  chipset: =[1]!Query1[[#This Row],[Chipsets]]
+  pcie_speed: Gen5
+  storage_controller: IRST
+  qty: 2
+  m2_slots: 2
+  reference: Vesta-Phase1
+  power_mode: si0x
+drive_details:
+  capacity: 512GB
+  form_factor: '2280'
+  serial_number: '23456789876'
+  windows_version: 25H2
+  bios_enumeration: PASS
+test:
+  name: BPC+IOMonkey+MS3
+  result: FAIL
+  ttf_minutes: 123
+classification:
+  severity: S1
+  failure_type: Reset
+  failure_stage: Power
+  reproducibility: Always
+  regression: 'Yes'
+analysis:
+  observed: HGADFLAKF
+  xplorer_url: KAFALSFA
+  jira: ''
+  jtag_analysis: ''
+  set_event_analysis: ''
+execution_id: Execution_2f5a876c
+execution_date_utc: '2026-04-10T15:25:25.006202'
+history:
+- iteration: Iteration-1
+  result: FAIL
+  ttf: 123
+  timestamp: '2026-04-10T15:25:25.006202'
