@@ -20,7 +20,7 @@ from modules.mastersheet_loader import load_mastersheet
 config = load_config()
 BASE_PATH = config["root_data_path"]
 
-# Enhanced CSS for better tab visibility and card interactions
+# Enhanced CSS
 st.markdown("""
 <style>
 /* Hide default Streamlit elements */
@@ -29,9 +29,7 @@ footer {visibility: hidden;}
 header {visibility: hidden;}
 [data-testid="stSidebar"] {display: none;}
 
-/* ============================================ */
-/* ENHANCED TAB STYLING */
-/* ============================================ */
+/* Tab styling */
 .stTabs [data-baseweb="tab-list"] {
     gap: 4px;
     background-color: #1e1e1e;
@@ -65,13 +63,7 @@ header {visibility: hidden;}
     box-shadow: 0 4px 15px rgba(255, 75, 75, 0.4);
 }
 
-.stTabs [data-baseweb="tab-panel"] {
-    padding-top: 20px;
-}
-
-/* ============================================ */
-/* CARD STACK STYLING */
-/* ============================================ */
+/* Card stack styling - MAX 3 cards with overlap */
 .card-stack {
     display: flex;
     flex-direction: row;
@@ -107,73 +99,55 @@ header {visibility: hidden;}
 .status-pass { background: linear-gradient(135deg, #1f7a1f 0%, #28a745 100%); }
 .status-fail { background: linear-gradient(135deg, #b30000 0%, #dc3545 100%); }
 .status-progress { background: linear-gradient(135deg, #d4a017 0%, #ffc107 100%); }
+.status-scheduled { background: linear-gradient(135deg, #0d6efd 0%, #17a2b8 100%); }
 
-/* ============================================ */
-/* MODAL/DIALOG FOR HISTORY */
-/* ============================================ */
-.history-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 10000;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 40px;
-    overflow-y: auto;
-}
-
-.history-modal {
-    background: #1e1e1e;
-    border-radius: 16px;
-    padding: 30px;
-    max-width: 900px;
+/* Coverage matrix table */
+#coverage-matrix {
     width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border-collapse: separate;
+    border-spacing: 2px;
 }
 
-.history-modal-header {
+#coverage-matrix td {
+    vertical-align: top !important;
+    padding: 4px 8px !important;
+    white-space: nowrap;
+    background: #1e1e1e;
+}
+
+#coverage-matrix th {
+    background: #2d2d2d !important;
+    color: white !important;
+    padding: 8px !important;
+    position: sticky;
+    top: 0;
+}
+
+/* History queue container */
+.history-queue {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #333;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px 5px;
+    scroll-behavior: smooth;
 }
 
-.history-modal-title {
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
+.history-queue::-webkit-scrollbar {
+    height: 8px;
 }
 
-.history-card {
-    padding: 20px;
-    border-radius: 12px;
-    margin: 12px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease;
+.history-queue::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 4px;
 }
 
-.history-card:hover {
-    transform: translateX(5px);
+.history-queue::-webkit-scrollbar-thumb {
+    background: #ff4b4b;
+    border-radius: 4px;
 }
 
-.history-card-pass { background: linear-gradient(135deg, #1f7a1f 0%, #28a745 100%); }
-.history-card-fail { background: linear-gradient(135deg, #b30000 0%, #dc3545 100%); }
-.history-card-progress { background: linear-gradient(135deg, #d4a017 0%, #ffc107 100%); }
-
-/* ============================================ */
-/* BUTTON ENHANCEMENTS */
-/* ============================================ */
+/* Button styling */
 .stButton > button {
     transition: all 0.3s ease;
     border-radius: 8px;
@@ -184,7 +158,7 @@ header {visibility: hidden;}
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* Custom scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -202,6 +176,25 @@ header {visibility: hidden;}
 ::-webkit-scrollbar-thumb:hover {
     background: #ff6b6b;
 }
+
+/* Category section styling */
+.category-section {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+    border-left: 4px solid #ff4b4b;
+}
+
+.category-header {
+    color: #ff4b4b;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -210,11 +203,11 @@ st.title("📊 Execution Dashboard")
 # Build execution index
 df = build_execution_index(BASE_PATH)
 
-# Add Is Scheduled column to existing df if not empty
+# Add Is Scheduled column
 if not df.empty:
     df["Is Scheduled"] = False
 
-# Merge scheduled tests into the dataframe
+# Merge scheduled tests
 scheduled_records = get_all_scheduled_as_dataframe_records(BASE_PATH)
 if scheduled_records:
     scheduled_df = pd.DataFrame(scheduled_records)
@@ -222,12 +215,10 @@ if scheduled_records:
     if df.empty:
         df = scheduled_df
     else:
-        # Merge
         df = pd.concat([df, scheduled_df], ignore_index=True)
 
-# Sort dataframe: IN_PROGRESS and scheduled first, then by date descending
+# Sort dataframe
 if not df.empty:
-    # Create a priority column for sorting
     df["_sort_priority"] = df["Result"].apply(
         lambda x: 0 if x == "IN_PROGRESS" else (1 if x == "SCHEDULED" else 2)
     )
@@ -246,10 +237,10 @@ if "expanded_rows" not in st.session_state:
     st.session_state.expanded_rows = set()
 if "fail_edit_id" not in st.session_state:
     st.session_state.fail_edit_id = None
-if "show_history_modal" not in st.session_state:
-    st.session_state.show_history_modal = False
-if "history_modal_data" not in st.session_state:
-    st.session_state.history_modal_data = None
+if "selected_card_cell" not in st.session_state:
+    st.session_state.selected_card_cell = None
+if "editing_history_card_id" not in st.session_state:
+    st.session_state.editing_history_card_id = None
 
 # ============================================================
 # GLOBAL FILTERS
@@ -267,11 +258,9 @@ if not df.empty:
     with f4:
         result_filter = st.multiselect("Result", df["Result"].dropna().unique())
     with f5:
-        iteration_values = df["Iteration"].dropna().unique()
-        iteration_filter = st.multiselect("Iteration", iteration_values)
+        iteration_filter = st.multiselect("Iteration", df["Iteration"].dropna().unique())
     with f6:
-        category_values = df["Test Category"].dropna().unique()
-        category_filter = st.multiselect("Test Category", category_values)
+        category_filter = st.multiselect("Test Category", df["Test Category"].dropna().unique())
 
     filtered_df = df.copy()
     if program_filter:
@@ -292,43 +281,37 @@ else:
 st.divider()
 
 # ============================================================
-# TABS - Removed "Schedule New Tests" section, only viewing
+# TABS
 # ============================================================
-schedule_tab, table_tab, platform_tab, analytics_tab, coverage_overview_tab, coverage_matrix_grouped_tab = st.tabs(
-    [
-        "📅 Scheduled Overview",
-        "📋 Execution Records",
-        "🖥️ Platform View",
-        "📈 Analytics",
-        "📊 Coverage Overview",
-        "📉 Graph Grouped"
-    ]
-)
+schedule_tab, table_tab, platform_tab, analytics_tab, coverage_overview_tab, coverage_matrix_grouped_tab = st.tabs([
+    "📅 Scheduled Overview",
+    "📋 Execution Records",
+    "🖥️ Platform View",
+    "📈 Analytics",
+    "📊 Coverage Overview",
+    "📉 Graph Grouped"
+])
 
 # ============================================================
-# TAB 0 — SCHEDULED OVERVIEW (View Only - No Creation)
+# TAB 0 — SCHEDULED OVERVIEW
 # ============================================================
 with schedule_tab:
     st.subheader("📅 Scheduled Tests Overview")
     st.info("💡 To schedule new tests, go to the main app → Quick Schedule tab")
-    
-    # Load test registry and mastersheet
+
     test_mapping, test_list = load_test_registry("test_registry.xlsx")
     platform_data = load_mastersheet("mastersheet.xlsx")
-    
     schedule_summary = get_platform_schedule_summary(BASE_PATH)
-    
+
     if schedule_summary:
-        # Platform selector for viewing
         view_platform = st.selectbox(
             "Select Platform to View Scheduled Tests",
             ["All Platforms"] + list(schedule_summary.keys()),
             key="view_platform"
         )
-        
-        # Display summary cards
+
         col1, col2, col3, col4, col5 = st.columns(5)
-        
+
         if view_platform == "All Platforms":
             total = sum(s["total"] for s in schedule_summary.values())
             in_progress = sum(s["in_progress"] for s in schedule_summary.values())
@@ -342,42 +325,30 @@ with schedule_tab:
             passed = stats.get("passed", 0)
             failed = stats.get("failed", 0)
             scheduled = stats.get("scheduled", 0)
-        
+
         col1.metric("📊 Total", total)
         col2.metric("🔄 In Progress", in_progress)
         col3.metric("✅ Passed", passed)
         col4.metric("❌ Failed", failed)
         col5.metric("⏳ Scheduled", scheduled)
-        
-        # Display scheduled entries
+
         st.markdown("#### Scheduled Entries")
-        
+
         all_entries = []
         if view_platform == "All Platforms":
             for plat, data in schedule_summary.items():
                 all_entries.extend(data["entries"])
         else:
             all_entries = schedule_summary.get(view_platform, {}).get("entries", [])
-        
-        # Sort entries: IN_PROGRESS first, then by created_at descending
-        all_entries = sorted(
-            all_entries,
-            key=lambda x: (
-                0 if x.get("status") == "IN_PROGRESS" else (1 if x.get("status") == "SCHEDULED" else 2),
-                x.get("created_at", "")
-            ),
-            reverse=False
-        )
-        # Reverse to get newest first within same priority
+
         all_entries = sorted(
             all_entries,
             key=lambda x: (
                 0 if x.get("status") == "IN_PROGRESS" else (1 if x.get("status") == "SCHEDULED" else 2),
             )
         )
-        
+
         if all_entries:
-            # Header
             header_cols = st.columns([2, 1.5, 1.5, 1, 1, 1, 1, 1])
             header_cols[0].markdown("**Test Name**")
             header_cols[1].markdown("**Platform**")
@@ -387,9 +358,9 @@ with schedule_tab:
             header_cols[5].markdown("**Form Factor**")
             header_cols[6].markdown("**Status**")
             header_cols[7].markdown("**Action**")
-            
+
             st.divider()
-            
+
             for entry in all_entries:
                 cols = st.columns([2, 1.5, 1.5, 1, 1, 1, 1, 1])
                 cols[0].write(entry.get('test_name', 'N/A'))
@@ -398,7 +369,7 @@ with schedule_tab:
                 cols[3].write(entry.get("iteration", "N/A"))
                 cols[4].write(entry.get("capacity", "N/A"))
                 cols[5].write(entry.get("form_factor", "N/A"))
-                
+
                 status = entry.get("status", "IN_PROGRESS")
                 status_emoji = {
                     "SCHEDULED": "⏳",
@@ -406,37 +377,34 @@ with schedule_tab:
                     "PASS": "✅",
                     "FAIL": "❌"
                 }.get(status, "🔄")
-                
+
                 status_color = {
                     "SCHEDULED": "#17a2b8",
                     "IN_PROGRESS": "#ffc107",
                     "PASS": "#28a745",
                     "FAIL": "#dc3545"
                 }.get(status, "#ffc107")
-                
+
                 cols[6].markdown(
                     f'<span style="color: {status_color}; font-weight: bold;">{status_emoji} {status}</span>',
                     unsafe_allow_html=True
                 )
-                
-                # Delete button
+
                 entry_id = entry.get("id", entry.get("execution_id"))
                 if cols[7].button("🗑️", key=f"del_sched_{entry_id}"):
                     remove_scheduled_entry(BASE_PATH, entry_id)
                     st.success("Entry removed!")
                     st.rerun()
-            
+
             st.divider()
-            
-            # Visualization
+
             st.markdown("#### 📊 Schedule Visualization")
             viz_df = pd.DataFrame(all_entries)
-            
+
             if not viz_df.empty:
                 col1, col2 = st.columns(2)
-                
+
                 with col1:
-                    # By Platform
                     if "platform" in viz_df.columns:
                         platform_counts = viz_df["platform"].value_counts().reset_index()
                         platform_counts.columns = ["Platform", "Count"]
@@ -448,9 +416,8 @@ with schedule_tab:
                             color_discrete_sequence=px.colors.qualitative.Set2
                         )
                         st.plotly_chart(fig1, use_container_width=True)
-                
+
                 with col2:
-                    # By Status with proper colors
                     if "status" in viz_df.columns:
                         status_counts = viz_df["status"].value_counts().reset_index()
                         status_counts.columns = ["Status", "Count"]
@@ -479,11 +446,10 @@ with schedule_tab:
 # ============================================================
 with table_tab:
     st.subheader("📋 Execution Records")
-    
+
     if filtered_df.empty:
         st.info("No records found.")
     else:
-        # ---------- HEADER ----------
         header = st.columns([2, 2, 1, 1, 1.5, 1, 1])
         header[0].markdown("**Platform**")
         header[1].markdown("**Test Name**")
@@ -492,54 +458,42 @@ with table_tab:
         header[4].markdown("**Result**")
         header[5].markdown("**Severity**")
         header[6].markdown("**Details**")
-        
         st.divider()
-        
-        # ---------- ROWS (Already sorted with IN_PROGRESS on top) ----------
+
         for idx, row in filtered_df.iterrows():
             execution_id = row["Execution ID"]
             current_result = row["Result"] if row["Result"] in ["PASS", "FAIL", "IN_PROGRESS"] else "IN_PROGRESS"
             is_scheduled = row.get("Is Scheduled", False)
-            
+
             cols = st.columns([2, 2, 1, 1, 1.5, 1, 1])
             cols[0].write(row["Platform"])
             cols[1].write(row["Test Name"])
             cols[2].write(row["Iteration"])
-            
+
             run_type = row.get("Run Type", "Initial")
             if is_scheduled:
                 cols[3].markdown("🔄 **Scheduled**")
             else:
                 cols[3].write(run_type)
-            
-            # Status selector with color coding
+
             new_result = cols[4].selectbox(
                 "",
                 ["PASS", "FAIL", "IN_PROGRESS"],
                 index=["PASS", "FAIL", "IN_PROGRESS"].index(current_result),
                 key=f"result_{execution_id}_{idx}"
             )
-            
-            # Handle status change
+
             if new_result != current_result:
                 if new_result == "PASS":
                     if is_scheduled:
-                        # Update scheduled entry
                         update_scheduled_entry_status(BASE_PATH, execution_id, "PASS")
                         st.success("Status updated to PASS")
                         st.rerun()
                     else:
-                        # Auto-save PASS - update the YAML file
                         program = row["Program"]
                         oem = row["OEM"]
                         firmware = row["Firmware"]
-                        firmware_path = (
-                            Path(BASE_PATH)
-                            / program
-                            / oem
-                            / f"Firmware_{firmware}_Official"
-                        )
-                        
+                        firmware_path = Path(BASE_PATH) / program / oem / f"Firmware_{firmware}_Official"
                         for path in firmware_path.rglob("execution.yaml"):
                             try:
                                 with open(path, "r") as f:
@@ -553,15 +507,13 @@ with table_tab:
                                     break
                             except Exception:
                                 continue
-                
                 elif new_result == "FAIL":
-                    # Open failure detail panel
                     st.session_state.fail_edit_id = execution_id
                     st.session_state.expanded_rows.add(execution_id)
-            
+
             severity_val = row.get("Severity", "")
             cols[5].write(severity_val if severity_val else "-")
-            
+
             toggle = "▼" if execution_id not in st.session_state.expanded_rows else "▲"
             if cols[6].button(toggle, key=f"toggle_{execution_id}_{idx}"):
                 if execution_id in st.session_state.expanded_rows:
@@ -572,12 +524,11 @@ with table_tab:
                         st.session_state.fail_edit_id = None
                 else:
                     st.session_state.expanded_rows.add(execution_id)
-            
-            # =============================
-            # EXPANDED VIEW
-            # =============================
+
+            # Expanded view
             if execution_id in st.session_state.expanded_rows:
                 st.markdown("##### Details")
+
                 d1, d2, d3 = st.columns(3)
                 with d1:
                     st.write("**Suite:**", row.get("Test Category", "-"))
@@ -592,43 +543,34 @@ with table_tab:
                     st.write("**Form Factor:**", row.get("Form Factor", "-"))
                     st.write("**OEM:**", row.get("OEM", "-"))
                     st.write("**Firmware:**", row.get("Firmware", "-"))
-                
-                # =============================
-                # PLATFORM HISTORY
-                # =============================
+
                 history_df = filtered_df[
                     (filtered_df["Platform"] == row["Platform"]) &
                     (filtered_df["Test Name"] == row["Test Name"])
                 ]
-                
+
                 st.markdown("##### Run History")
                 history_display = history_df[["Iteration", "Result", "Execution Date"]].copy()
                 history_display = history_display.sort_values("Execution Date", ascending=False)
                 st.dataframe(history_display, use_container_width=True)
-                
-                # =============================
-                # EDIT BUTTON
-                # =============================
+
                 if not is_scheduled:
                     btn_col1, btn_col2 = st.columns(2)
                     with btn_col1:
                         if st.button("✏️ Edit Details", key=f"edit_{execution_id}_{idx}"):
                             st.session_state.editing_id = execution_id
-                
                 st.divider()
-            
-            # =============================
-            # FAILURE DETAIL PANEL
-            # =============================
+
+            # Failure detail panel
             if st.session_state.fail_edit_id == execution_id:
                 st.markdown(f"### ❌ Record Failure Details: {row['Platform']} | {row['Test Name']}")
-                
+
                 is_scheduled_entry = row.get("Is Scheduled", False)
-                
+
                 st.markdown("#### Failure Classification")
-                
-                f1, f2, f3 = st.columns(3)
-                with f1:
+                fc1, fc2, fc3 = st.columns(3)
+
+                with fc1:
                     severity = st.selectbox(
                         "Severity",
                         ["S1", "S2", "S3", "S4"],
@@ -639,7 +581,8 @@ with table_tab:
                         ["BSOD", "Hang", "Reset", "Power", "Performance", "Other"],
                         key=f"fail_type_{execution_id}_{idx}"
                     )
-                with f2:
+
+                with fc2:
                     failure_stage = st.selectbox(
                         "Failure Stage",
                         ["Boot", "Init", "IO", "Power", "Reset", "Runtime", "Unknown"],
@@ -650,7 +593,8 @@ with table_tab:
                         ["Always", "Intermittent", "Rare", "Not Reproducible"],
                         key=f"fail_repro_{execution_id}_{idx}"
                     )
-                with f3:
+
+                with fc3:
                     regression = st.selectbox(
                         "Regression",
                         ["Yes", "No", "Unknown"],
@@ -661,7 +605,7 @@ with table_tab:
                         min_value=0,
                         key=f"fail_ttf_{execution_id}_{idx}"
                     )
-                
+
                 st.markdown("#### Analysis Details")
                 observed = st.text_area(
                     "Observed Behavior",
@@ -676,7 +620,7 @@ with table_tab:
                     "JIRA ID / Link",
                     key=f"fail_jira_{execution_id}_{idx}"
                 )
-                
+
                 with st.expander("🔧 Advanced Technical Details"):
                     jtag_analysis = st.text_area(
                         "JTAG Analysis",
@@ -686,16 +630,14 @@ with table_tab:
                         "Set Event Analysis",
                         key=f"fail_setevent_{execution_id}_{idx}"
                     )
-                
+
                 save_col, cancel_col = st.columns(2)
-                
                 with save_col:
                     if st.button("💾 Save Failure Details", key=f"save_fail_{execution_id}_{idx}", type="primary"):
                         if not observed or not xplorer_url:
                             st.error("Observed Behavior and Artifacts/Links are required.")
                         else:
                             if is_scheduled_entry:
-                                # Update scheduled entry with failure details
                                 additional_data = {
                                     "classification": {
                                         "severity": severity,
@@ -719,20 +661,13 @@ with table_tab:
                                 st.session_state.fail_edit_id = None
                                 st.rerun()
                             else:
-                                # Update YAML file
                                 program = row["Program"]
                                 oem = row["OEM"]
                                 firmware = row["Firmware"]
-                                firmware_path = (
-                                    Path(BASE_PATH)
-                                    / program
-                                    / oem
-                                    / f"Firmware_{firmware}_Official"
-                                )
-                                
+                                firmware_path = Path(BASE_PATH) / program / oem / f"Firmware_{firmware}_Official"
+
                                 yaml_path = None
                                 yaml_data = None
-                                
                                 for path in firmware_path.rglob("execution.yaml"):
                                     try:
                                         with open(path, "r") as f:
@@ -743,11 +678,10 @@ with table_tab:
                                             break
                                     except Exception:
                                         continue
-                                
+
                                 if yaml_data:
                                     yaml_data["test"]["result"] = "FAIL"
                                     yaml_data["test"]["ttf_minutes"] = ttf
-                                    
                                     yaml_data["classification"] = {
                                         "severity": severity,
                                         "failure_type": failure_type,
@@ -755,7 +689,6 @@ with table_tab:
                                         "reproducibility": reproducibility,
                                         "regression": regression
                                     }
-                                    
                                     yaml_data["analysis"] = {
                                         "observed": observed,
                                         "xplorer_url": xplorer_url,
@@ -763,40 +696,32 @@ with table_tab:
                                         "jtag_analysis": jtag_analysis,
                                         "set_event_analysis": set_event_analysis
                                     }
-                                    
+
                                     with open(yaml_path, "w") as f:
                                         yaml.dump(yaml_data, f, sort_keys=False)
-                                    
+
                                     st.success("Failure details saved successfully!")
                                     st.session_state.fail_edit_id = None
                                     st.rerun()
-                
+
                 with cancel_col:
                     if st.button("❌ Cancel", key=f"cancel_fail_{execution_id}_{idx}"):
                         st.session_state.fail_edit_id = None
                         st.rerun()
-                
+
                 st.divider()
-            
-            # =============================
-            # EDIT PANEL (EXISTING)
-            # =============================
+
+            # Edit panel
             if st.session_state.editing_id == execution_id and not is_scheduled:
                 st.markdown(f"### ✏️ Editing: {row['Platform']} | {row['Test Name']}")
-                
+
                 program = row["Program"]
                 oem = row["OEM"]
                 firmware = row["Firmware"]
-                firmware_path = (
-                    Path(BASE_PATH)
-                    / program
-                    / oem
-                    / f"Firmware_{firmware}_Official"
-                )
-                
+                firmware_path = Path(BASE_PATH) / program / oem / f"Firmware_{firmware}_Official"
+
                 yaml_path = None
                 yaml_data = None
-                
                 for path in firmware_path.rglob("execution.yaml"):
                     try:
                         with open(path, "r") as f:
@@ -807,7 +732,7 @@ with table_tab:
                             break
                     except Exception:
                         continue
-                
+
                 if yaml_data:
                     st.subheader("Test")
                     yaml_data["test"]["result"] = st.selectbox(
@@ -823,7 +748,7 @@ with table_tab:
                         value=int(yaml_data["test"].get("ttf_minutes") or 0),
                         key=f"edit_ttf_{execution_id}_{idx}"
                     )
-                    
+
                     st.subheader("Classification")
                     classification = yaml_data.get("classification", {})
                     classification["severity"] = st.selectbox(
@@ -847,7 +772,7 @@ with table_tab:
                         key=f"edit_regression_{execution_id}_{idx}"
                     )
                     yaml_data["classification"] = classification
-                    
+
                     st.subheader("Analysis")
                     analysis = yaml_data.get("analysis", {})
                     analysis["observed"] = st.text_area(
@@ -865,7 +790,7 @@ with table_tab:
                         value=analysis.get("jira", ""),
                         key=f"edit_jira_{execution_id}_{idx}"
                     )
-                    
+
                     st.markdown("#### Advanced Technical Details")
                     analysis["jtag_analysis"] = st.text_area(
                         "JTAG Analysis",
@@ -878,7 +803,7 @@ with table_tab:
                         key=f"edit_setevent_{execution_id}_{idx}"
                     )
                     yaml_data["analysis"] = analysis
-                    
+
                     c1, c2 = st.columns(2)
                     if c1.button("💾 Save", key=f"save_edit_{execution_id}_{idx}"):
                         with open(yaml_path, "w") as f:
@@ -889,7 +814,7 @@ with table_tab:
                     if c2.button("❌ Cancel", key=f"cancel_edit_{execution_id}_{idx}"):
                         st.session_state.editing_id = None
                         st.rerun()
-                
+
                 st.divider()
 
 # ============================================================
@@ -897,20 +822,18 @@ with table_tab:
 # ============================================================
 with platform_tab:
     st.subheader("🖥️ Platform Tracking")
-    
+
     if not filtered_df.empty:
         platform = st.selectbox(
             "Select Platform",
             filtered_df["Platform"].unique(),
             key="platform_view_select"
         )
-        
         platform_df = filtered_df[filtered_df["Platform"] == platform]
-        
-        # Show scheduled tests for this platform
+
         st.markdown("#### 📅 Scheduled Tests for This Platform")
         platform_scheduled = get_platform_schedule_summary(BASE_PATH).get(platform, {})
-        
+
         if platform_scheduled:
             sched_cols = st.columns(5)
             sched_cols[0].metric("Total Scheduled", platform_scheduled.get("total", 0))
@@ -920,9 +843,9 @@ with platform_tab:
             sched_cols[4].metric("Pending", platform_scheduled.get("scheduled", 0))
         else:
             st.info("No scheduled tests for this platform.")
-        
+
         st.divider()
-        
+
         st.subheader("Latest Status")
         latest = (
             platform_df
@@ -932,9 +855,9 @@ with platform_tab:
             .reset_index()
         )
         st.dataframe(latest, use_container_width=True)
-        
+
         st.divider()
-        
+
         st.subheader("Execution History")
         st.dataframe(
             platform_df.sort_values("Execution Date", ascending=False),
@@ -949,31 +872,31 @@ with platform_tab:
 with analytics_tab:
     if not filtered_df.empty:
         st.subheader("📈 KPI Overview")
+
         total = len(filtered_df)
         passes = len(filtered_df[filtered_df["Result"] == "PASS"])
         fails = len(filtered_df[filtered_df["Result"] == "FAIL"])
         inprog = len(filtered_df[filtered_df["Result"] == "IN_PROGRESS"])
         fail_rate = round((fails / total) * 100, 2) if total else 0
-        
+
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Total Runs", total)
         c2.metric("Pass", passes, delta=f"{round((passes/total)*100, 1)}%" if total else "0%")
         c3.metric("Fail", fails, delta=f"-{fail_rate}%" if fails else "0%", delta_color="inverse")
         c4.metric("In Progress", inprog)
-        
+
         st.divider()
-        
-        # Result distribution pie chart with IN_PROGRESS in yellow
+
         st.subheader("Result Distribution")
         result_counts = filtered_df["Result"].value_counts().reset_index()
         result_counts.columns = ["Result", "Count"]
-        
+
         color_map = {
             "PASS": "#28a745",
             "FAIL": "#dc3545",
             "IN_PROGRESS": "#ffc107"
         }
-        
+
         fig = px.pie(
             result_counts,
             values="Count",
@@ -983,12 +906,12 @@ with analytics_tab:
             title="Overall Result Distribution"
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         st.divider()
-        
-        # Top failing tests
+
         st.subheader("Top Failing Tests")
         fail_df = filtered_df[filtered_df["Result"] == "FAIL"]
+
         if not fail_df.empty:
             top_tests = (
                 fail_df.groupby("Test Name")
@@ -997,6 +920,7 @@ with analytics_tab:
                 .sort_values(by="Failures", ascending=False)
                 .head(10)
             )
+
             fig = px.bar(
                 top_tests,
                 x="Test Name",
@@ -1007,10 +931,9 @@ with analytics_tab:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.success("No failures recorded!")
-        
+
         st.divider()
-        
-        # Platform Stability
+
         st.subheader("Platform Stability")
         platform_stats = (
             filtered_df.groupby("Platform")
@@ -1023,6 +946,7 @@ with analytics_tab:
         platform_stats["Stability %"] = (
             100 - (platform_stats["fails"] / platform_stats["total"] * 100)
         )
+
         fig = px.bar(
             platform_stats.reset_index(),
             x="Platform",
@@ -1031,10 +955,9 @@ with analytics_tab:
             color_continuous_scale="Greens"
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         st.divider()
-        
-        # Firmware Health
+
         st.subheader("Firmware Health")
         fw_stats = (
             filtered_df.groupby("Firmware")
@@ -1046,6 +969,7 @@ with analytics_tab:
         fw_stats["Failure %"] = (
             fw_stats["fails"] / fw_stats["total"] * 100
         )
+
         fig = px.bar(
             fw_stats.reset_index(),
             x="Firmware",
@@ -1054,18 +978,19 @@ with analytics_tab:
             color_continuous_scale="Reds"
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         st.divider()
-        
-        # Trend over time
+
         st.subheader("Failure Trend")
         trend_df = filtered_df.copy()
         trend_df["Date"] = pd.to_datetime(trend_df["Execution Date"]).dt.date
+
         daily = (
             trend_df.groupby(["Date", "Result"])
             .size()
             .reset_index(name="Count")
         )
+
         if not daily.empty:
             fig = px.line(
                 daily,
@@ -1073,13 +998,16 @@ with analytics_tab:
                 y="Count",
                 color="Result",
                 markers=True,
-                color_discrete_map={"PASS": "#28a745", "FAIL": "#dc3545", "IN_PROGRESS": "#ffc107"}
+                color_discrete_map={
+                    "PASS": "#28a745",
+                    "FAIL": "#dc3545",
+                    "IN_PROGRESS": "#ffc107"
+                }
             )
             st.plotly_chart(fig, use_container_width=True)
-        
+
         st.divider()
-        
-        # OEM comparison
+
         st.subheader("OEM Comparison")
         oem_stats = (
             filtered_df.groupby("OEM")
@@ -1092,6 +1020,7 @@ with analytics_tab:
         oem_stats["Failure %"] = (
             oem_stats["Fails"] / oem_stats["Total"] * 100
         )
+
         fig = px.bar(
             oem_stats,
             x="OEM",
@@ -1109,10 +1038,10 @@ with analytics_tab:
 # ============================================================
 with coverage_overview_tab:
     st.subheader("📊 Coverage Overview")
-    
+
     if not filtered_df.empty:
         coverage_df = filtered_df.dropna(subset=["Capacity", "Form Factor"]).copy()
-        
+
         if not coverage_df.empty:
             coverage_agg = (
                 coverage_df
@@ -1127,20 +1056,19 @@ with coverage_overview_tab:
                 .agg(Result=("Result", "last"))
                 .reset_index()
             )
-            
+
             total = len(coverage_agg)
             platforms = coverage_agg["Platform"].nunique()
             oems = coverage_agg["OEM"].nunique()
-            
+
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Configs", total)
             c2.metric("Platforms", platforms)
             c3.metric("OEMs", oems)
             c4.metric("Firmware", coverage_agg["Firmware"].nunique())
-            
+
             st.divider()
-            
-            # Coverage by Capacity
+
             st.subheader("Coverage by Capacity")
             cap = (
                 coverage_agg.groupby("Capacity")
@@ -1155,10 +1083,9 @@ with coverage_overview_tab:
                 color_continuous_scale="Blues"
             )
             st.plotly_chart(fig, use_container_width=True)
-            
+
             st.divider()
-            
-            # Coverage by Form Factor
+
             st.subheader("Coverage by Form Factor")
             coverage_agg["Form Factor"] = coverage_agg["Form Factor"].astype(str)
             ff_order = ["2230", "2242", "2280"]
@@ -1178,10 +1105,9 @@ with coverage_overview_tab:
             )
             fig.update_xaxes(type="category")
             st.plotly_chart(fig, use_container_width=True)
-            
+
             st.divider()
-            
-            # Coverage by OEM
+
             st.subheader("Coverage by OEM")
             oem = (
                 coverage_agg.groupby("OEM")
@@ -1196,10 +1122,9 @@ with coverage_overview_tab:
                 color_continuous_scale="Oranges"
             )
             st.plotly_chart(fig, use_container_width=True)
-            
+
             st.divider()
-            
-            # Coverage by Firmware
+
             st.subheader("Coverage by Firmware")
             fw = (
                 coverage_agg.groupby("Firmware")
@@ -1214,9 +1139,9 @@ with coverage_overview_tab:
                 color_continuous_scale="Greens"
             )
             st.plotly_chart(fig, use_container_width=True)
-            
+
             st.divider()
-            
+
             st.subheader("Detailed Coverage Table")
             st.dataframe(coverage_agg, use_container_width=True)
         else:
@@ -1225,267 +1150,678 @@ with coverage_overview_tab:
         st.info("No coverage data available.")
 
 # ============================================================
-# GROUPED COVERAGE MATRIX - WITH CLICKABLE CARDS FOR FULL HISTORY
+# TAB 5 — GROUPED COVERAGE MATRIX (WITH CATEGORY-WISE QUEUE HISTORY)
 # ============================================================
-
 with coverage_matrix_grouped_tab:
     st.subheader("📉 OEM Coverage Matrix")
-    st.markdown("**💡 Click on any cell below to view full execution history**")
-    
+    st.markdown("**💡 View the matrix below, then use the filters to view full history organized by Test Category**")
+
     if not filtered_df.empty:
         df2 = filtered_df.copy()
-        df2["Config"] = (
-            df2["Capacity"].astype(str)
-            + "-"
-            + df2["Form Factor"].astype(str)
-        )
-        
-        # FIXED: build_card function to work with DataFrame groups
+        df2["Config"] = df2["Capacity"].astype(str) + "-" + df2["Form Factor"].astype(str)
+
+        # Build card function - MAX 3 CARDS with overlapping
         def build_card(group_df):
-            """Build HTML card stack from a DataFrame group."""
+            """Build HTML card stack from a DataFrame group - MAX 3 cards."""
             group_df = group_df.sort_values("Execution Date", ascending=False)
             cards = []
-            
-            for _, r in group_df.head(5).iterrows():  # Show max 5 cards
+            for _, r in group_df.head(3).iterrows():
                 result = r["Result"]
                 if result == "PASS":
                     status_class = "status-pass"
                 elif result == "FAIL":
                     status_class = "status-fail"
-                else:  # IN_PROGRESS
+                elif result == "SCHEDULED":
+                    status_class = "status-scheduled"
+                else:
                     status_class = "status-progress"
-                
+
                 cfg = f"{r['Capacity']}-{r['Form Factor']}"
                 firmware = r.get("Firmware", "N/A")
-                
-                card = (
-                    f'<div class="card {status_class}">'
-                    f'<b>{result}</b><br>'
-                    f'{firmware}<br>'
-                    f'<small>{cfg}</small>'
-                    f'</div>'
-                )
+                card = f'<div class="card {status_class}"><b>{result}</b><br>{firmware}<br><small>{cfg}</small></div>'
                 cards.append(card)
-            
+
             if cards:
-                return (
-                    '<div class="card-stack">'
-                    + ''.join(cards) +
-                    '</div>'
-                )
+                return '<div class="card-stack">' + ''.join(cards) + '</div>'
             return ""
-        
-        # Group and build cards
+
+        # Build and display the original HTML matrix
         try:
-            cell_df = (
-                df2
-                .groupby([
-                    "OEM",
-                    "Platform",
-                    "Test Category",
-                    "Test Name"
-                ], as_index=False)
-                .apply(build_card)
-            )
+            cell_df = df2.groupby(
+                ["OEM", "Platform", "Test Category", "Test Name"],
+                as_index=False
+            ).apply(build_card)
             cell_df.columns = ["OEM", "Platform", "Test Category", "Test Name", "Cell"]
-            
+
             if not cell_df.empty:
                 pivot = cell_df.pivot(
                     index=["OEM", "Platform"],
                     columns=["Test Category", "Test Name"],
                     values="Cell"
                 ).fillna("")
-                
-                html_table = pivot.to_html(escape=False, border=0)
+
+                html_table = pivot.to_html(escape=False, border=0, table_id="coverage-matrix")
                 st.markdown(html_table, unsafe_allow_html=True)
-                
-                st.markdown("""
-                    <style>
-                    td {
-                        vertical-align: top !important;
-                        padding: 4px 8px !important;
-                        white-space: nowrap;
-                    }
-                    th {
-                        background: #2d2d2d !important;
-                        color: white !important;
-                        padding: 8px !important;
-                    }
-                    .card-stack {
-                        display: flex;
-                        flex-direction: row;
-                        position: relative;
-                        min-height: 50px;
-                        align-items: center;
-                        cursor: pointer;
-                    }
-                    .card-stack .card {
-                        padding: 6px 10px;
-                        border-radius: 6px;
-                        font-size: 10px;
-                        color: white;
-                        margin-right: -16px;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-                        cursor: pointer;
-                        min-width: 70px;
-                        text-align: center;
-                    }
-                    .card-stack:hover .card {
-                        margin-right: 4px;
-                    }
-                    .card:hover {
-                        transform: translateY(-4px) scale(1.08);
-                        z-index: 999;
-                        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-                    }
-                    .status-pass { background: linear-gradient(135deg, #1f7a1f 0%, #28a745 100%); }
-                    .status-fail { background: linear-gradient(135deg, #b30000 0%, #dc3545 100%); }
-                    .status-progress { background: linear-gradient(135deg, #d4a017 0%, #ffc107 100%); }
-                    </style>
-                """, unsafe_allow_html=True)
+
         except Exception as e:
             st.error(f"Error building matrix: {str(e)}")
-        
+
         st.divider()
-        
-        # =============================
-        # CLICKABLE CELL HISTORY - FULL SCREEN MODAL STYLE
-        # =============================
-        st.markdown("### 🔍 Click to View Full History")
-        st.markdown("Select a cell from the matrix above to see complete execution history:")
-        
-        # Get unique combinations from the data
-        unique_combos = df2.groupby(["OEM", "Platform", "Test Name"]).size().reset_index()[["OEM", "Platform", "Test Name"]]
-        
-        # Create a more intuitive selection
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # OEM + Platform selection
-            oem_platform_options = df2.groupby(["OEM", "Platform"]).size().reset_index()[["OEM", "Platform"]]
-            oem_platform_options["display"] = oem_platform_options["OEM"] + " → " + oem_platform_options["Platform"]
-            
-            selected_oem_platform = st.selectbox(
-                "Select OEM & Platform",
-                oem_platform_options["display"].tolist(),
-                key="matrix_oem_platform"
+
+        # ============================================================
+        # HISTORY SECTION WITH FILTERS
+        # ============================================================
+        st.markdown("### 📜 View Execution History")
+        st.markdown("*Select OEM, Platform, and optionally Test Category. History is organized by category with latest entries on the left (queue order).*")
+
+        # Get unique values for filters
+        available_oems = sorted(df2["OEM"].dropna().unique().tolist())
+        available_platforms = sorted(df2["Platform"].dropna().unique().tolist())
+        available_categories = sorted(df2["Test Category"].dropna().unique().tolist())
+
+        # Filter dropdowns in columns
+        filter_col1, filter_col2, filter_col3 = st.columns(3)
+
+        with filter_col1:
+            selected_oem = st.selectbox(
+                "Select OEM",
+                ["-- Select --"] + available_oems,
+                key="hist_oem_select"
             )
-            
-            if selected_oem_platform:
-                selected_oem = selected_oem_platform.split(" → ")[0]
-                selected_platform = selected_oem_platform.split(" → ")[1]
-        
-        with col2:
-            # Test selection based on OEM/Platform
-            if selected_oem_platform:
-                available_tests = df2[
-                    (df2["OEM"] == selected_oem) & 
+
+        # Filter platforms based on OEM selection
+        if selected_oem != "-- Select --":
+            filtered_platforms = sorted(
+                df2[df2["OEM"] == selected_oem]["Platform"].dropna().unique().tolist()
+            )
+        else:
+            filtered_platforms = available_platforms
+
+        with filter_col2:
+            selected_platform = st.selectbox(
+                "Select Platform",
+                ["-- Select --"] + filtered_platforms,
+                key="hist_platform_select"
+            )
+
+        # Filter categories based on OEM and Platform selection
+        if selected_oem != "-- Select --" and selected_platform != "-- Select --":
+            filtered_categories = sorted(
+                df2[
+                    (df2["OEM"] == selected_oem) &
                     (df2["Platform"] == selected_platform)
-                ]["Test Name"].unique().tolist()
-                
-                selected_test = st.selectbox(
-                    "Select Test",
-                    available_tests,
-                    key="matrix_test"
-                )
-        
-        # Show full history button
-        if selected_oem_platform and selected_test:
-            if st.button("📋 Show Full Execution History", use_container_width=True, type="primary"):
-                st.session_state.show_history_modal = True
-                st.session_state.history_modal_data = {
+                ]["Test Category"].dropna().unique().tolist()
+            )
+        elif selected_oem != "-- Select --":
+            filtered_categories = sorted(
+                df2[df2["OEM"] == selected_oem]["Test Category"].dropna().unique().tolist()
+            )
+        else:
+            filtered_categories = available_categories
+
+        with filter_col3:
+            selected_category = st.selectbox(
+                "Select Test Category",
+                ["-- All Categories --"] + filtered_categories,
+                key="hist_category_select"
+            )
+
+        # Show history button
+        if selected_oem != "-- Select --" and selected_platform != "-- Select --":
+            if st.button("🔍 Show History", type="primary", key="show_history_btn"):
+                st.session_state.selected_card_cell = {
                     "oem": selected_oem,
                     "platform": selected_platform,
-                    "test": selected_test
+                    "test_category": selected_category if selected_category != "-- All Categories --" else None
                 }
-        
-        # =============================
-        # FULL HISTORY DISPLAY (Modal-like)
-        # =============================
-        if st.session_state.show_history_modal and st.session_state.history_modal_data:
-            modal_data = st.session_state.history_modal_data
-            
-            # Find matching data
-            history_data = df2[
-                (df2["OEM"] == modal_data["oem"]) &
-                (df2["Platform"] == modal_data["platform"]) &
-                (df2["Test Name"] == modal_data["test"])
-            ].sort_values("Execution Date", ascending=False)
-            
-            st.markdown("---")
-            
-            # Header with close button
-            header_col1, header_col2 = st.columns([6, 1])
-            with header_col1:
-                st.markdown(f"""
-                ### 📜 Full Execution History
-                **OEM:** {modal_data['oem']} | **Platform:** {modal_data['platform']} | **Test:** {modal_data['test']}
-                """)
-            with header_col2:
-                if st.button("❌ Close", key="close_history_modal"):
-                    st.session_state.show_history_modal = False
-                    st.session_state.history_modal_data = None
-                    st.rerun()
-            
-            st.markdown(f"**Total Executions:** {len(history_data)}")
-            st.markdown("---")
-            
-            if not history_data.empty:
-                # Display all cards in a grid layout
-                cards_per_row = 3
-                rows = [history_data.iloc[i:i+cards_per_row] for i in range(0, len(history_data), cards_per_row)]
-                
-                for row_data in rows:
-                    cols = st.columns(cards_per_row)
-                    for col_idx, (_, row) in enumerate(row_data.iterrows()):
-                        with cols[col_idx]:
-                            result = row["Result"]
-                            if result == "PASS":
-                                bg_color = "#28a745"
-                                icon = "✅"
-                                border_color = "#1f7a1f"
-                            elif result == "FAIL":
-                                bg_color = "#dc3545"
-                                icon = "❌"
-                                border_color = "#b30000"
-                            else:
-                                bg_color = "#ffc107"
-                                icon = "🔄"
-                                border_color = "#d4a017"
-                            
-                            exec_date = row["Execution Date"]
-                            if hasattr(exec_date, 'strftime'):
-                                exec_date_str = exec_date.strftime("%Y-%m-%d %H:%M")
-                            else:
-                                exec_date_str = str(exec_date)[:16]
-                            
-                            st.markdown(f"""
-                            <div style="
-                                background: linear-gradient(135deg, {bg_color} 0%, {border_color} 100%);
-                                color: white;
-                                padding: 20px;
-                                border-radius: 12px;
-                                margin: 10px 0;
-                                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-                                transition: transform 0.2s ease;
-                            ">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <span style="font-size: 28px;">{icon}</span>
-                                    <strong style="font-size: 20px;">{result}</strong>
-                                </div>
-                                <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
-                                <div style="font-size: 13px;">
-                                    <div><strong>📁 Firmware:</strong> {row.get("Firmware", "N/A")}</div>
-                                    <div><strong>💾 Config:</strong> {row.get("Capacity", "N/A")}-{row.get("Form Factor", "N/A")}</div>
-                                    <div><strong>🔄 Iteration:</strong> {row.get("Iteration", "N/A")}</div>
-                                    <div><strong>📅 Date:</strong> {exec_date_str}</div>
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                
-                st.markdown("---")
+
+        # ============================================================
+        # DISPLAY HISTORY WHEN CELL IS SELECTED - CATEGORY WISE QUEUE
+        # ============================================================
+        if st.session_state.selected_card_cell:
+            cell_data = st.session_state.selected_card_cell
+
+            # Build query based on selections
+            history_query = df2[
+                (df2["OEM"] == cell_data["oem"]) &
+                (df2["Platform"] == cell_data["platform"])
+            ]
+
+            if cell_data.get("test_category"):
+                history_query = history_query[
+                    history_query["Test Category"] == cell_data["test_category"]
+                ]
+                category_label = cell_data["test_category"]
             else:
-                st.info("No history found for this combination.")
+                category_label = "All Categories"
+
+            # Sort by execution date descending (latest first - for queue order)
+            history_data = history_query.sort_values(
+                "Execution Date",
+                ascending=False
+            ).reset_index(drop=True)
+
+            # Header
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #ff4b4b 0%, #ff6b6b 100%);
+                padding: 20px;
+                border-radius: 12px;
+                margin: 20px 0;
+            ">
+                <h3 style="color: white; margin: 0;">📜 Execution History (Queue Order)</h3>
+                <p style="color: white; margin: 10px 0 0 0;">
+                    <strong>OEM:</strong> {cell_data['oem']} |
+                    <strong>Platform:</strong> {cell_data['platform']} |
+                    <strong>Test Category:</strong> {category_label}
+                </p>
+                <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 12px;">
+                    ⬅️ Latest entries appear on the left, older entries on the right (like a queue)
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Close button
+            if st.button("❌ Close History", key="close_history"):
+                st.session_state.selected_card_cell = None
+                st.session_state.editing_history_card_id = None
+                st.rerun()
+
+            # Summary metrics
+            st.markdown("---")
+            summary_cols = st.columns(5)
+            total_records = len(history_data)
+            pass_count = len(history_data[history_data["Result"] == "PASS"])
+            fail_count = len(history_data[history_data["Result"] == "FAIL"])
+            in_progress_count = len(history_data[history_data["Result"] == "IN_PROGRESS"])
+            scheduled_count = len(history_data[history_data["Result"] == "SCHEDULED"])
+
+            summary_cols[0].metric("📊 Total", total_records)
+            summary_cols[1].metric("✅ Passed", pass_count)
+            summary_cols[2].metric("❌ Failed", fail_count)
+            summary_cols[3].metric("🔄 In Progress", in_progress_count)
+            summary_cols[4].metric("⏳ Scheduled", scheduled_count)
+
+            unique_tests = history_data["Test Name"].nunique()
+            unique_categories = history_data["Test Category"].nunique()
+            st.markdown(f"**📋 Found {unique_tests} unique tests across {unique_categories} categories**")
+            st.markdown("---")
+
+            if not history_data.empty:
+                # Group by Test Category
+                categories_in_data = sorted(history_data["Test Category"].unique())
+
+                for category in categories_in_data:
+                    category_data = history_data[history_data["Test Category"] == category]
+                    
+                    # Sort by execution date descending (latest first - queue order)
+                    category_data = category_data.sort_values("Execution Date", ascending=False)
+
+                    # Category header with count
+                    cat_pass = len(category_data[category_data["Result"] == "PASS"])
+                    cat_fail = len(category_data[category_data["Result"] == "FAIL"])
+                    cat_progress = len(category_data[category_data["Result"] == "IN_PROGRESS"])
+                    cat_scheduled = len(category_data[category_data["Result"] == "SCHEDULED"])
+
+                    st.markdown(f"""
+                    <div class="category-section">
+                        <div class="category-header">
+                            📁 {category}
+                            <span style="font-size: 12px; color: #888; font-weight: normal;">
+                                ({len(category_data)} executions | 
+                                ✅ {cat_pass} | ❌ {cat_fail} | 🔄 {cat_progress} | ⏳ {cat_scheduled})
+                            </span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Display cards in horizontal queue (latest on left)
+                    # Use columns for horizontal layout - show all cards in a scrollable row
+                    num_cards = len(category_data)
+                    
+                    if num_cards > 0:
+                        # Create a container for horizontal scrolling
+                        with st.container():
+                            # Determine number of columns (max 6 visible, rest scrollable)
+                            visible_cols = min(6, num_cards)
+                            cols = st.columns(visible_cols)
+                            
+                            for card_idx, (df_idx, row) in enumerate(category_data.iterrows()):
+                                col_idx = card_idx % visible_cols
+                                
+                                with cols[col_idx]:
+                                    result = row["Result"]
+                                    execution_id = row["Execution ID"]
+                                    is_scheduled = row.get("Is Scheduled", False)
+                                    card_unique_id = f"{execution_id}_{category}_{card_idx}_{df_idx}"
+
+                                    # Determine colors
+                                    if result == "PASS":
+                                        bg_color = "#28a745"
+                                        border_color = "#1f7a1f"
+                                        icon = "✅"
+                                    elif result == "FAIL":
+                                        bg_color = "#dc3545"
+                                        border_color = "#b30000"
+                                        icon = "❌"
+                                    elif result == "SCHEDULED":
+                                        bg_color = "#17a2b8"
+                                        border_color = "#0d6efd"
+                                        icon = "⏳"
+                                    else:
+                                        bg_color = "#ffc107"
+                                        border_color = "#d4a017"
+                                        icon = "🔄"
+
+                                    # Format date
+                                    exec_date = row["Execution Date"]
+                                    if hasattr(exec_date, 'strftime'):
+                                        exec_date_str = exec_date.strftime("%Y-%m-%d %H:%M")
+                                    else:
+                                        exec_date_str = str(exec_date)[:16] if exec_date else "N/A"
+
+                                    is_editing = st.session_state.editing_history_card_id == card_unique_id
+                                    card_border = "3px solid #00d4ff" if is_editing else "none"
+
+                                    # Queue position indicator
+                                    position_label = "🆕 Latest" if card_idx == 0 else f"#{card_idx + 1}"
+
+                                    # Card HTML
+                                    st.markdown(f"""
+                                    <div style="
+                                        background: linear-gradient(135deg, {bg_color} 0%, {border_color} 100%);
+                                        color: white;
+                                        padding: 15px;
+                                        border-radius: 12px;
+                                        margin: 5px 0;
+                                        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                                        border: {card_border};
+                                        min-height: 200px;
+                                    ">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="font-size: 10px; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">{position_label}</span>
+                                            <span style="font-size: 24px;">{icon}</span>
+                                        </div>
+                                        <div style="text-align: center; margin-bottom: 8px;">
+                                            <strong style="font-size: 16px;">{result}</strong>
+                                        </div>
+                                        <hr style="border-color: rgba(255,255,255,0.3); margin: 8px 0;">
+                                        <div style="font-size: 11px;">
+                                            <div><strong>🧪</strong> {row.get("Test Name", "N/A")[:20]}{'...' if len(str(row.get("Test Name", ""))) > 20 else ''}</div>
+                                            <div><strong>📦</strong> {row.get("Firmware", "N/A")}</div>
+                                            <div><strong>💾</strong> {row.get("Capacity", "N/A")}-{row.get("Form Factor", "N/A")}</div>
+                                            <div><strong>🔄</strong> {row.get("Iteration", "N/A")}</div>
+                                            <div><strong>📅</strong> {exec_date_str}</div>
+                                        </div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+
+                                    # Edit button
+                                    edit_btn_key = f"edit_hist_{card_unique_id}"
+                                    if st.button(
+                                        "✏️" if not is_editing else "📝",
+                                        key=edit_btn_key,
+                                        use_container_width=True,
+                                        type="primary" if is_editing else "secondary"
+                                    ):
+                                        if is_editing:
+                                            st.session_state.editing_history_card_id = None
+                                        else:
+                                            st.session_state.editing_history_card_id = card_unique_id
+                                        st.rerun()
+
+                                    # Inline edit form
+                                    if is_editing:
+                                        st.markdown("---")
+                                        st.markdown("##### ✏️ Edit")
+
+                                        form_key = f"edit_form_{card_unique_id}"
+
+                                        with st.form(key=form_key):
+                                            current_result_idx = ["PASS", "FAIL", "IN_PROGRESS"].index(result) if result in ["PASS", "FAIL", "IN_PROGRESS"] else 2
+
+                                            edit_result = st.selectbox(
+                                                "Result",
+                                                ["PASS", "FAIL", "IN_PROGRESS"],
+                                                index=current_result_idx,
+                                                key=f"res_{card_unique_id}"
+                                            )
+
+                                            if edit_result == "FAIL":
+                                                edit_severity = st.selectbox(
+                                                    "Severity",
+                                                    ["S1", "S2", "S3", "S4"],
+                                                    key=f"sev_{card_unique_id}"
+                                                )
+                                                edit_fail_type = st.selectbox(
+                                                    "Failure Type",
+                                                    ["BSOD", "Hang", "Reset", "Power", "Performance", "Other"],
+                                                    key=f"ftype_{card_unique_id}"
+                                                )
+                                                edit_fail_stage = st.selectbox(
+                                                    "Failure Stage",
+                                                    ["Boot", "Init", "IO", "Power", "Reset", "Runtime", "Unknown"],
+                                                    key=f"fstage_{card_unique_id}"
+                                                )
+                                                edit_repro = st.selectbox(
+                                                    "Reproducibility",
+                                                    ["Always", "Intermittent", "Rare", "Not Reproducible"],
+                                                    key=f"repro_{card_unique_id}"
+                                                )
+                                                edit_regression = st.selectbox(
+                                                    "Regression",
+                                                    ["Yes", "No", "Unknown"],
+                                                    key=f"reg_{card_unique_id}"
+                                                )
+                                                edit_observed = st.text_area(
+                                                    "Observed",
+                                                    key=f"obs_{card_unique_id}"
+                                                )
+                                                edit_artifacts = st.text_area(
+                                                    "Artifacts",
+                                                    key=f"art_{card_unique_id}"
+                                                )
+                                                edit_jira = st.text_input(
+                                                    "JIRA",
+                                                    key=f"jira_{card_unique_id}"
+                                                )
+                                            else:
+                                                edit_severity = "S1"
+                                                edit_fail_type = "Other"
+                                                edit_fail_stage = "Unknown"
+                                                edit_repro = "Not Reproducible"
+                                                edit_regression = "Unknown"
+                                                edit_observed = ""
+                                                edit_artifacts = ""
+                                                edit_jira = ""
+
+                                            edit_ttf = st.number_input(
+                                                "TTF (min)",
+                                                min_value=0,
+                                                value=int(row.get("TTF (min)", 0) or 0),
+                                                key=f"ttf_{card_unique_id}"
+                                            )
+
+                                            submitted = st.form_submit_button(
+                                                "💾 Save",
+                                                type="primary",
+                                                use_container_width=True
+                                            )
+
+                                            if submitted:
+                                                try:
+                                                    if is_scheduled:
+                                                        additional_data = {"ttf_minutes": edit_ttf}
+                                                        if edit_result == "FAIL":
+                                                            additional_data.update({
+                                                                "classification": {
+                                                                    "severity": edit_severity,
+                                                                    "failure_type": edit_fail_type,
+                                                                    "failure_stage": edit_fail_stage,
+                                                                    "reproducibility": edit_repro,
+                                                                    "regression": edit_regression
+                                                                },
+                                                                "analysis": {
+                                                                    "observed": edit_observed,
+                                                                    "xplorer_url": edit_artifacts,
+                                                                    "jira": edit_jira
+                                                                },
+                                                                "severity": edit_severity
+                                                            })
+                                                        update_scheduled_entry_status(
+                                                            BASE_PATH,
+                                                            execution_id,
+                                                            edit_result,
+                                                            additional_data
+                                                        )
+                                                        st.success("✅ Updated!")
+                                                        st.session_state.editing_history_card_id = None
+                                                        st.rerun()
+                                                    else:
+                                                        program = row.get("Program")
+                                                        oem = row.get("OEM")
+                                                        firmware = row.get("Firmware")
+
+                                                        if program and oem and firmware:
+                                                            firmware_path = (
+                                                                Path(BASE_PATH)
+                                                                / program
+                                                                / oem
+                                                                / f"Firmware_{firmware}_Official"
+                                                            )
+
+                                                            yaml_found = False
+                                                            for path in firmware_path.rglob("execution.yaml"):
+                                                                try:
+                                                                    with open(path, "r") as f:
+                                                                        data = yaml.safe_load(f)
+                                                                    if data and data.get("execution_id") == execution_id:
+                                                                        data["test"]["result"] = edit_result
+                                                                        data["test"]["ttf_minutes"] = edit_ttf
+
+                                                                        if edit_result == "FAIL":
+                                                                            data["classification"] = {
+                                                                                "severity": edit_severity,
+                                                                                "failure_type": edit_fail_type,
+                                                                                "failure_stage": edit_fail_stage,
+                                                                                "reproducibility": edit_repro,
+                                                                                "regression": edit_regression
+                                                                            }
+                                                                            data["analysis"] = {
+                                                                                "observed": edit_observed,
+                                                                                "xplorer_url": edit_artifacts,
+                                                                                "jira": edit_jira
+                                                                            }
+
+                                                                        with open(path, "w") as f:
+                                                                            yaml.dump(data, f, sort_keys=False)
+
+                                                                        yaml_found = True
+                                                                        st.success("✅ Saved!")
+                                                                        st.session_state.editing_history_card_id = None
+                                                                        st.rerun()
+                                                                        break
+                                                                except Exception:
+                                                                    continue
+
+                                                            if not yaml_found:
+                                                                st.error("❌ File not found.")
+                                                        else:
+                                                            st.error("❌ Missing info.")
+                                                except Exception as e:
+                                                    st.error(f"❌ Error: {str(e)}")
+
+                                        # Cancel button
+                                        if st.button("❌ Cancel", key=f"cancel_{card_unique_id}"):
+                                            st.session_state.editing_history_card_id = None
+                                            st.rerun()
+
+                            # If there are more cards than visible columns, show remaining in next rows
+                            if num_cards > visible_cols:
+                                remaining_cards = list(category_data.iterrows())[visible_cols:]
+                                
+                                for batch_start in range(0, len(remaining_cards), visible_cols):
+                                    batch = remaining_cards[batch_start:batch_start + visible_cols]
+                                    cols = st.columns(visible_cols)
+                                    
+                                    for batch_idx, (df_idx, row) in enumerate(batch):
+                                        card_idx = visible_cols + batch_start + batch_idx
+                                        
+                                        with cols[batch_idx]:
+                                            result = row["Result"]
+                                            execution_id = row["Execution ID"]
+                                            is_scheduled = row.get("Is Scheduled", False)
+                                            card_unique_id = f"{execution_id}_{category}_{card_idx}_{df_idx}"
+
+                                            # Determine colors
+                                            if result == "PASS":
+                                                bg_color = "#28a745"
+                                                border_color = "#1f7a1f"
+                                                icon = "✅"
+                                            elif result == "FAIL":
+                                                bg_color = "#dc3545"
+                                                border_color = "#b30000"
+                                                icon = "❌"
+                                            elif result == "SCHEDULED":
+                                                bg_color = "#17a2b8"
+                                                border_color = "#0d6efd"
+                                                icon = "⏳"
+                                            else:
+                                                bg_color = "#ffc107"
+                                                border_color = "#d4a017"
+                                                icon = "🔄"
+
+                                            exec_date = row["Execution Date"]
+                                            if hasattr(exec_date, 'strftime'):
+                                                exec_date_str = exec_date.strftime("%Y-%m-%d %H:%M")
+                                            else:
+                                                exec_date_str = str(exec_date)[:16] if exec_date else "N/A"
+
+                                            is_editing = st.session_state.editing_history_card_id == card_unique_id
+                                            card_border = "3px solid #00d4ff" if is_editing else "none"
+                                            position_label = f"#{card_idx + 1}"
+
+                                            st.markdown(f"""
+                                            <div style="
+                                                background: linear-gradient(135deg, {bg_color} 0%, {border_color} 100%);
+                                                color: white;
+                                                padding: 15px;
+                                                border-radius: 12px;
+                                                margin: 5px 0;
+                                                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                                                border: {card_border};
+                                                min-height: 200px;
+                                            ">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                    <span style="font-size: 10px; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">{position_label}</span>
+                                                    <span style="font-size: 24px;">{icon}</span>
+                                                </div>
+                                                <div style="text-align: center; margin-bottom: 8px;">
+                                                    <strong style="font-size: 16px;">{result}</strong>
+                                                </div>
+                                                <hr style="border-color: rgba(255,255,255,0.3); margin: 8px 0;">
+                                                <div style="font-size: 11px;">
+                                                    <div><strong>🧪</strong> {row.get("Test Name", "N/A")[:20]}{'...' if len(str(row.get("Test Name", ""))) > 20 else ''}</div>
+                                                    <div><strong>📦</strong> {row.get("Firmware", "N/A")}</div>
+                                                    <div><strong>💾</strong> {row.get("Capacity", "N/A")}-{row.get("Form Factor", "N/A")}</div>
+                                                    <div><strong>🔄</strong> {row.get("Iteration", "N/A")}</div>
+                                                    <div><strong>📅</strong> {exec_date_str}</div>
+                                                </div>
+                                            </div>
+                                            """, unsafe_allow_html=True)
+
+                                            edit_btn_key = f"edit_hist_{card_unique_id}"
+                                            if st.button(
+                                                "✏️" if not is_editing else "📝",
+                                                key=edit_btn_key,
+                                                use_container_width=True,
+                                                type="primary" if is_editing else "secondary"
+                                            ):
+                                                if is_editing:
+                                                    st.session_state.editing_history_card_id = None
+                                                else:
+                                                    st.session_state.editing_history_card_id = card_unique_id
+                                                st.rerun()
+
+                                            if is_editing:
+                                                st.markdown("---")
+                                                st.markdown("##### ✏️ Edit")
+
+                                                form_key = f"edit_form_{card_unique_id}"
+
+                                                with st.form(key=form_key):
+                                                    current_result_idx = ["PASS", "FAIL", "IN_PROGRESS"].index(result) if result in ["PASS", "FAIL", "IN_PROGRESS"] else 2
+
+                                                    edit_result = st.selectbox(
+                                                        "Result",
+                                                        ["PASS", "FAIL", "IN_PROGRESS"],
+                                                        index=current_result_idx,
+                                                        key=f"res_{card_unique_id}"
+                                                    )
+
+                                                    if edit_result == "FAIL":
+                                                        edit_severity = st.selectbox("Severity", ["S1", "S2", "S3", "S4"], key=f"sev_{card_unique_id}")
+                                                        edit_fail_type = st.selectbox("Failure Type", ["BSOD", "Hang", "Reset", "Power", "Performance", "Other"], key=f"ftype_{card_unique_id}")
+                                                        edit_fail_stage = st.selectbox("Failure Stage", ["Boot", "Init", "IO", "Power", "Reset", "Runtime", "Unknown"], key=f"fstage_{card_unique_id}")
+                                                        edit_repro = st.selectbox("Reproducibility", ["Always", "Intermittent", "Rare", "Not Reproducible"], key=f"repro_{card_unique_id}")
+                                                        edit_regression = st.selectbox("Regression", ["Yes", "No", "Unknown"], key=f"reg_{card_unique_id}")
+                                                        edit_observed = st.text_area("Observed", key=f"obs_{card_unique_id}")
+                                                        edit_artifacts = st.text_area("Artifacts", key=f"art_{card_unique_id}")
+                                                        edit_jira = st.text_input("JIRA", key=f"jira_{card_unique_id}")
+                                                    else:
+                                                        edit_severity, edit_fail_type, edit_fail_stage = "S1", "Other", "Unknown"
+                                                        edit_repro, edit_regression = "Not Reproducible", "Unknown"
+                                                        edit_observed, edit_artifacts, edit_jira = "", "", ""
+
+                                                    edit_ttf = st.number_input("TTF (min)", min_value=0, value=int(row.get("TTF (min)", 0) or 0), key=f"ttf_{card_unique_id}")
+
+                                                    submitted = st.form_submit_button("💾 Save", type="primary", use_container_width=True)
+
+                                                    if submitted:
+                                                        try:
+                                                            if is_scheduled:
+                                                                additional_data = {"ttf_minutes": edit_ttf}
+                                                                if edit_result == "FAIL":
+                                                                    additional_data.update({
+                                                                        "classification": {"severity": edit_severity, "failure_type": edit_fail_type, "failure_stage": edit_fail_stage, "reproducibility": edit_repro, "regression": edit_regression},
+                                                                        "analysis": {"observed": edit_observed, "xplorer_url": edit_artifacts, "jira": edit_jira},
+                                                                        "severity": edit_severity
+                                                                    })
+                                                                update_scheduled_entry_status(BASE_PATH, execution_id, edit_result, additional_data)
+                                                                st.success("✅ Updated!")
+                                                                st.session_state.editing_history_card_id = None
+                                                                st.rerun()
+                                                            else:
+                                                                program, oem, firmware = row.get("Program"), row.get("OEM"), row.get("Firmware")
+                                                                if program and oem and firmware:
+                                                                    firmware_path = Path(BASE_PATH) / program / oem / f"Firmware_{firmware}_Official"
+                                                                    for path in firmware_path.rglob("execution.yaml"):
+                                                                        try:
+                                                                            with open(path, "r") as f:
+                                                                                data = yaml.safe_load(f)
+                                                                            if data and data.get("execution_id") == execution_id:
+                                                                                data["test"]["result"] = edit_result
+                                                                                data["test"]["ttf_minutes"] = edit_ttf
+                                                                                if edit_result == "FAIL":
+                                                                                    data["classification"] = {"severity": edit_severity, "failure_type": edit_fail_type, "failure_stage": edit_fail_stage, "reproducibility": edit_repro, "regression": edit_regression}
+                                                                                    data["analysis"] = {"observed": edit_observed, "xplorer_url": edit_artifacts, "jira": edit_jira}
+                                                                                with open(path, "w") as f:
+                                                                                    yaml.dump(data, f, sort_keys=False)
+                                                                                st.success("✅ Saved!")
+                                                                                st.session_state.editing_history_card_id = None
+                                                                                st.rerun()
+                                                                                break
+                                                                        except:
+                                                                            continue
+                                                        except Exception as e:
+                                                            st.error(f"❌ Error: {str(e)}")
+
+                                                if st.button("❌ Cancel", key=f"cancel_{card_unique_id}"):
+                                                    st.session_state.editing_history_card_id = None
+                                                    st.rerun()
+
+                    st.markdown("---")
+
+            else:
+                st.info("No history found for this selection.")
+        else:
+            # No selection made yet
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+                padding: 30px;
+                border-radius: 12px;
+                text-align: center;
+                margin: 20px 0;
+                border: 2px dashed #555;
+            ">
+                <h4 style="color: #ff4b4b;">👆 Select from the dropdowns above</h4>
+                <p style="color: #888; font-size: 14px;">
+                    Choose OEM and Platform (required), optionally select a Test Category,<br>
+                    then click "Show History" to view execution details organized by category.<br><br>
+                    <strong>Queue Order:</strong> Latest entries appear on the left ⬅️, older entries on the right ➡️
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
     else:
         st.info("No data available for matrix view.")

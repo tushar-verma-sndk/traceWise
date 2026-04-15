@@ -34,7 +34,9 @@
       "form_factor": "2280",
       "id": "134fe6a9",
       "created_at": "2026-04-14T22:09:05.382554",
-      "status": "SCHEDULED"
+      "status": "PASS",
+      "result": "PASS",
+      "updated_at": "2026-04-15T16:57:06.479861"
     },
     {
       "platform": "Acer Predator Helios 18 AI PH 18-73",
@@ -47,8 +49,9 @@
       "id": "b17d66f0",
       "execution_id": "SCHED_b17d66f0",
       "created_at": "2026-04-14T22:26:08.887644",
-      "status": "IN_PROGRESS",
-      "result": "IN_PROGRESS"
+      "status": "PASS",
+      "result": "PASS",
+      "updated_at": "2026-04-15T16:53:47.264589"
     }
   ]
 }
