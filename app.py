@@ -223,7 +223,7 @@ with tab2:
     # -----------------------
     # Platform Selection
     # -----------------------
-    platform_data = load_mastersheet("mastersheet.xlsx")
+    platform_data = load_mastersheet("MasterSheet.xlsx")
     platform = st.selectbox("Platform", list(platform_data.keys()))
     selected_platform = platform_data.get(platform, {})
     
@@ -507,7 +507,7 @@ with tab3:
     
     # Load test registry and mastersheet
     test_mapping, test_list = load_test_registry("test_registry.xlsx")
-    platform_data = load_mastersheet("mastersheet.xlsx")
+    platform_data = load_mastersheet("MasterSheet.xlsx")
     
     st.divider()
     

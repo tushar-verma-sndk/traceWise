@@ -425,7 +425,7 @@ with schedule_tab:
     st.info("💡 To schedule new tests, go to the main app → Quick Schedule tab")
 
     test_mapping, test_list = load_test_registry("test_registry.xlsx")
-    platform_data = load_mastersheet("mastersheet.xlsx")
+    platform_data = load_mastersheet("MasterSheet.xlsx")
     schedule_summary = get_platform_schedule_summary(BASE_PATH)
 
     if schedule_summary:
