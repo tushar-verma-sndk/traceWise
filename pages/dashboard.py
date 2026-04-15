@@ -195,6 +195,131 @@ header {visibility: hidden;}
     align-items: center;
     gap: 10px;
 }
+
+/* Platform View Enhanced Styles */
+.platform-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid #2a2a4a;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.platform-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.platform-subtitle {
+    font-size: 14px;
+    color: #888;
+}
+
+.stat-card {
+    background: linear-gradient(145deg, #1e1e2e 0%, #2a2a3e 100%);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #333;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.health-indicator {
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.health-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.test-card {
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 8px 0;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.test-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.test-card-pass { border-left-color: #28a745; }
+.test-card-fail { border-left-color: #dc3545; }
+.test-card-progress { border-left-color: #ffc107; }
+.test-card-scheduled { border-left-color: #17a2b8; }
+
+.info-box {
+    background: linear-gradient(135deg, #1a1a2e 0%, #252540 100%);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #333;
+}
+
+.info-box-title {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.info-box-value {
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.firmware-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #4a4a6a 0%, #3a3a5a 100%);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #fff;
+    margin: 2px;
+}
+
+.oem-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff4b4b 0%, #ff6b6b 100%);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #fff;
+    margin: 2px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -818,53 +943,486 @@ with table_tab:
                 st.divider()
 
 # ============================================================
-# TAB 2 — PLATFORM VIEW
+# TAB 2 — ENHANCED PLATFORM VIEW
 # ============================================================
 with platform_tab:
-    st.subheader("🖥️ Platform Tracking")
-
     if not filtered_df.empty:
+        # Platform selector
+        st.markdown("### 🖥️ Select Platform")
         platform = st.selectbox(
-            "Select Platform",
+            "",
             filtered_df["Platform"].unique(),
-            key="platform_view_select"
+            key="platform_view_select",
+            label_visibility="collapsed"
         )
+
         platform_df = filtered_df[filtered_df["Platform"] == platform]
 
-        st.markdown("#### 📅 Scheduled Tests for This Platform")
-        platform_scheduled = get_platform_schedule_summary(BASE_PATH).get(platform, {})
+        # Get platform statistics
+        total_executions = len(platform_df)
+        pass_count = len(platform_df[platform_df["Result"] == "PASS"])
+        fail_count = len(platform_df[platform_df["Result"] == "FAIL"])
+        in_progress_count = len(platform_df[platform_df["Result"] == "IN_PROGRESS"])
+        scheduled_count = len(platform_df[platform_df["Result"] == "SCHEDULED"])
 
-        if platform_scheduled:
-            sched_cols = st.columns(5)
-            sched_cols[0].metric("Total Scheduled", platform_scheduled.get("total", 0))
-            sched_cols[1].metric("In Progress", platform_scheduled.get("in_progress", 0))
-            sched_cols[2].metric("Passed", platform_scheduled.get("passed", 0))
-            sched_cols[3].metric("Failed", platform_scheduled.get("failed", 0))
-            sched_cols[4].metric("Pending", platform_scheduled.get("scheduled", 0))
+        # Calculate health score
+        if total_executions > 0:
+            health_score = round((pass_count / total_executions) * 100, 1)
         else:
-            st.info("No scheduled tests for this platform.")
+            health_score = 0
 
-        st.divider()
+        # Get platform metadata
+        platform_oem = platform_df["OEM"].iloc[0] if not platform_df.empty else "N/A"
+        platform_program = platform_df["Program"].iloc[0] if not platform_df.empty else "N/A"
+        unique_firmwares = platform_df["Firmware"].dropna().unique()
+        unique_categories = platform_df["Test Category"].dropna().unique()
 
-        st.subheader("Latest Status")
-        latest = (
-            platform_df
-            .sort_values("Execution Date")
-            .groupby("Test Name")
-            .last()
-            .reset_index()
-        )
-        st.dataframe(latest, use_container_width=True)
+        # Latest execution date
+        latest_exec = platform_df["Execution Date"].max() if not platform_df.empty else None
+        if latest_exec:
+            if hasattr(latest_exec, 'strftime'):
+                latest_exec_str = latest_exec.strftime("%Y-%m-%d %H:%M")
+            else:
+                latest_exec_str = str(latest_exec)[:16]
+        else:
+            latest_exec_str = "N/A"
 
-        st.divider()
+        # =============================
+        # PLATFORM HEADER SECTION
+        # =============================
+        health_color = '#28a745' if health_score >= 80 else '#ffc107' if health_score >= 50 else '#dc3545'
 
-        st.subheader("Execution History")
-        st.dataframe(
-            platform_df.sort_values("Execution Date", ascending=False),
-            use_container_width=True
-        )
+        st.markdown(f"""
+        <div class="platform-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div class="platform-title">🖥️ {platform}</div>
+                    <div class="platform-subtitle">
+                        <span class="oem-badge">{platform_oem}</span>
+                        <span style="color: #888; margin: 0 10px;">|</span>
+                        <span style="color: #888;">Program: {platform_program}</span>
+                        <span style="color: #888; margin: 0 10px;">|</span>
+                        <span style="color: #888;">Last Activity: {latest_exec_str}</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 48px; font-weight: bold; color: {health_color};">
+                        {health_score}%
+                    </div>
+                    <div style="font-size: 12px; color: #888; text-transform: uppercase;">Health Score</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # =============================
+        # KEY METRICS ROW
+        # =============================
+        st.markdown("### 📊 Key Metrics")
+
+        m1, m2, m3, m4, m5, m6 = st.columns(6)
+
+        with m1:
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-value" style="color: #fff;">{total_executions}</div>
+                <div class="stat-label">Total Runs</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with m2:
+            pass_pct = (pass_count / total_executions * 100) if total_executions > 0 else 0
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-value" style="color: #28a745;">{pass_count}</div>
+                <div class="stat-label">Passed</div>
+                <div class="health-indicator">
+                    <div class="health-bar" style="width: {pass_pct}%; background: #28a745;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with m3:
+            fail_pct = (fail_count / total_executions * 100) if total_executions > 0 else 0
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-value" style="color: #dc3545;">{fail_count}</div>
+                <div class="stat-label">Failed</div>
+                <div class="health-indicator">
+                    <div class="health-bar" style="width: {fail_pct}%; background: #dc3545;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with m4:
+            progress_pct = (in_progress_count / total_executions * 100) if total_executions > 0 else 0
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-value" style="color: #ffc107;">{in_progress_count}</div>
+                <div class="stat-label">In Progress</div>
+                <div class="health-indicator">
+                    <div class="health-bar" style="width: {progress_pct}%; background: #ffc107;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with m5:
+            sched_pct = (scheduled_count / total_executions * 100) if total_executions > 0 else 0
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-value" style="color: #17a2b8;">{scheduled_count}</div>
+                <div class="stat-label">Scheduled</div>
+                <div class="health-indicator">
+                    <div class="health-bar" style="width: {sched_pct}%; background: #17a2b8;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with m6:
+            unique_tests = platform_df["Test Name"].nunique()
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-value" style="color: #9b59b6;">{unique_tests}</div>
+                <div class="stat-label">Unique Tests</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # =============================
+        # CONFIGURATION & FIRMWARE INFO
+        # =============================
+        st.markdown("### ⚙️ Configuration Details")
+
+        cfg1, cfg2, cfg3 = st.columns(3)
+
+        with cfg1:
+            st.markdown("""
+            <div class="info-box">
+                <div class="info-box-title">📦 Firmware Versions</div>
+            </div>
+            """, unsafe_allow_html=True)
+            for fw in list(unique_firmwares)[:5]:
+                fw_count = len(platform_df[platform_df["Firmware"] == fw])
+                st.markdown(f'<span class="firmware-badge">{fw} ({fw_count})</span>', unsafe_allow_html=True)
+            if len(unique_firmwares) > 5:
+                st.markdown(f'<span style="color: #888; font-size: 12px;">+{len(unique_firmwares) - 5} more</span>', unsafe_allow_html=True)
+
+        with cfg2:
+            st.markdown("""
+            <div class="info-box">
+                <div class="info-box-title">🧪 Test Categories</div>
+            </div>
+            """, unsafe_allow_html=True)
+            for cat in list(unique_categories)[:5]:
+                cat_count = len(platform_df[platform_df["Test Category"] == cat])
+                cat_pass = len(platform_df[(platform_df["Test Category"] == cat) & (platform_df["Result"] == "PASS")])
+                cat_rate = round((cat_pass / cat_count * 100), 0) if cat_count > 0 else 0
+                color = "#28a745" if cat_rate >= 80 else "#ffc107" if cat_rate >= 50 else "#dc3545"
+                cat_display = cat[:25] + '...' if len(str(cat)) > 25 else cat
+                st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #333;">
+                    <span style="color: #fff; font-size: 13px;">{cat_display}</span>
+                    <span style="color: {color}; font-weight: bold;">{cat_rate}%</span>
+                </div>
+                """, unsafe_allow_html=True)
+            if len(unique_categories) > 5:
+                st.markdown(f'<span style="color: #888; font-size: 12px;">+{len(unique_categories) - 5} more categories</span>', unsafe_allow_html=True)
+
+        with cfg3:
+            st.markdown("""
+            <div class="info-box">
+                <div class="info-box-title">💾 Hardware Configurations</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            capacities = platform_df["Capacity"].dropna().unique()
+            form_factors = platform_df["Form Factor"].dropna().unique()
+
+            cap_badges = ''.join([f'<span class="firmware-badge">{c}</span>' for c in list(capacities)[:4]])
+            ff_badges = ''.join([f'<span class="firmware-badge">{ff}</span>' for ff in list(form_factors)[:4]])
+
+            st.markdown(f"""
+            <div style="padding: 5px 0;">
+                <span style="color: #888; font-size: 12px;">Capacities:</span><br>
+                {cap_badges}
+            </div>
+            <div style="padding: 5px 0;">
+                <span style="color: #888; font-size: 12px;">Form Factors:</span><br>
+                {ff_badges}
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # =============================
+        # VISUAL ANALYTICS ROW
+        # =============================
+        st.markdown("### 📈 Visual Analytics")
+
+        chart1, chart2 = st.columns(2)
+
+        with chart1:
+            # Result distribution pie chart
+            result_data = platform_df["Result"].value_counts().reset_index()
+            result_data.columns = ["Result", "Count"]
+
+            color_map = {
+                "PASS": "#28a745",
+                "FAIL": "#dc3545",
+                "IN_PROGRESS": "#ffc107",
+                "SCHEDULED": "#17a2b8"
+            }
+
+            fig = px.pie(
+                result_data,
+                values="Count",
+                names="Result",
+                color="Result",
+                color_discrete_map=color_map,
+                hole=0.6
+            )
+            fig.update_layout(
+                title="Result Distribution",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font_color="white",
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2)
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+
+        with chart2:
+            # Test category performance bar chart
+            cat_perf = platform_df.groupby("Test Category").agg(
+                Total=("Result", "count"),
+                Passed=("Result", lambda x: (x == "PASS").sum())
+            ).reset_index()
+            cat_perf["Pass Rate"] = (cat_perf["Passed"] / cat_perf["Total"] * 100).round(1)
+            cat_perf = cat_perf.sort_values("Pass Rate", ascending=True).tail(8)
+
+            fig = px.bar(
+                cat_perf,
+                x="Pass Rate",
+                y="Test Category",
+                orientation="h",
+                color="Pass Rate",
+                color_continuous_scale=["#dc3545", "#ffc107", "#28a745"]
+            )
+            fig.update_layout(
+                title="Pass Rate by Test Category",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font_color="white",
+                xaxis_title="Pass Rate (%)",
+                yaxis_title="",
+                coloraxis_showscale=False
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # =============================
+        # EXECUTION TIMELINE
+        # =============================
+        st.markdown("### 🕐 Recent Execution Timeline")
+
+        # Get last 10 executions sorted by date
+        recent_executions = platform_df.sort_values("Execution Date", ascending=False).head(10)
+
+        if not recent_executions.empty:
+            for idx, (_, row) in enumerate(recent_executions.iterrows()):
+                result = row["Result"]
+
+                # Determine colors and icons
+                if result == "PASS":
+                    dot_color = "#28a745"
+                    icon = "✅"
+                    card_class = "test-card-pass"
+                elif result == "FAIL":
+                    dot_color = "#dc3545"
+                    icon = "❌"
+                    card_class = "test-card-fail"
+                elif result == "SCHEDULED":
+                    dot_color = "#17a2b8"
+                    icon = "⏳"
+                    card_class = "test-card-scheduled"
+                else:
+                    dot_color = "#ffc107"
+                    icon = "🔄"
+                    card_class = "test-card-progress"
+
+                exec_date = row["Execution Date"]
+                if hasattr(exec_date, 'strftime'):
+                    exec_date_str = exec_date.strftime("%Y-%m-%d %H:%M")
+                else:
+                    exec_date_str = str(exec_date)[:16] if exec_date else "N/A"
+
+                test_name = row.get("Test Name", "N/A")
+                test_name_display = test_name[:50] + '...' if len(str(test_name)) > 50 else test_name
+
+                st.markdown(f"""
+                <div class="test-card {card_class}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 24px;">{icon}</span>
+                            <div>
+                                <div style="font-weight: bold; color: #fff; font-size: 14px;">
+                                    {test_name_display}
+                                </div>
+                                <div style="color: #888; font-size: 12px;">
+                                    {row.get("Test Category", "N/A")} | Iteration: {row.get("Iteration", "N/A")}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: {dot_color}; font-weight: bold;">{result}</div>
+                            <div style="color: #888; font-size: 11px;">{exec_date_str}</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No recent executions found.")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # =============================
+        # FAILURE ANALYSIS (if failures exist)
+        # =============================
+        fail_df = platform_df[platform_df["Result"] == "FAIL"]
+
+        if not fail_df.empty:
+            st.markdown("### ⚠️ Failure Analysis")
+
+            fa1, fa2, fa3 = st.columns(3)
+
+            with fa1:
+                st.markdown("""
+                <div class="info-box">
+                    <div class="info-box-title">🔴 Top Failing Tests</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                top_failing = fail_df.groupby("Test Name").size().reset_index(name="Failures")
+                top_failing = top_failing.sort_values("Failures", ascending=False).head(5)
+
+                for _, row in top_failing.iterrows():
+                    test_name = row['Test Name']
+                    test_display = test_name[:30] + '...' if len(str(test_name)) > 30 else test_name
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333;">
+                        <span style="color: #fff; font-size: 12px;">{test_display}</span>
+                        <span style="color: #dc3545; font-weight: bold; background: rgba(220, 53, 69, 0.2); padding: 2px 8px; border-radius: 10px;">{row['Failures']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            with fa2:
+                st.markdown("""
+                <div class="info-box">
+                    <div class="info-box-title">📊 Failures by Category</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                fail_by_cat = fail_df.groupby("Test Category").size().reset_index(name="Failures")
+                fail_by_cat = fail_by_cat.sort_values("Failures", ascending=False).head(5)
+
+                for _, row in fail_by_cat.iterrows():
+                    cat_name = row['Test Category']
+                    cat_display = cat_name[:25] + '...' if len(str(cat_name)) > 25 else cat_name
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333;">
+                        <span style="color: #fff; font-size: 12px;">{cat_display}</span>
+                        <span style="color: #dc3545; font-weight: bold;">{row['Failures']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            with fa3:
+                st.markdown("""
+                <div class="info-box">
+                    <div class="info-box-title">🎯 Severity Distribution</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                if "Severity" in fail_df.columns:
+                    severity_counts = fail_df["Severity"].value_counts()
+                    severity_colors = {"S1": "#dc3545", "S2": "#fd7e14", "S3": "#ffc107", "S4": "#28a745"}
+
+                    for sev, count in severity_counts.items():
+                        if sev and str(sev) != "nan" and str(sev).strip():
+                            color = severity_colors.get(sev, "#888")
+                            st.markdown(f"""
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333;">
+                                <span style="color: {color}; font-weight: bold;">{sev}</span>
+                                <span style="color: #fff;">{count} failures</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+                else:
+                    st.markdown('<span style="color: #888;">No severity data available</span>', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # =============================
+        # DETAILED DATA TABLE
+        # =============================
+        with st.expander("📋 View All Execution Records", expanded=False):
+            st.markdown("#### Complete Execution History")
+
+            # Add filters within expander
+            filter_col1, filter_col2, filter_col3 = st.columns(3)
+
+            with filter_col1:
+                result_filter_platform = st.multiselect(
+                    "Filter by Result",
+                    platform_df["Result"].unique(),
+                    key="platform_result_filter"
+                )
+
+            with filter_col2:
+                category_filter_platform = st.multiselect(
+                    "Filter by Category",
+                    platform_df["Test Category"].unique(),
+                    key="platform_category_filter"
+                )
+
+            with filter_col3:
+                firmware_filter_platform = st.multiselect(
+                    "Filter by Firmware",
+                    platform_df["Firmware"].unique(),
+                    key="platform_firmware_filter"
+                )
+
+            # Apply filters
+            display_df = platform_df.copy()
+            if result_filter_platform:
+                display_df = display_df[display_df["Result"].isin(result_filter_platform)]
+            if category_filter_platform:
+                display_df = display_df[display_df["Test Category"].isin(category_filter_platform)]
+            if firmware_filter_platform:
+                display_df = display_df[display_df["Firmware"].isin(firmware_filter_platform)]
+
+            # Display table
+            display_cols = ["Test Name", "Test Category", "Result", "Firmware", "Iteration", "Capacity", "Form Factor", "Execution Date"]
+            available_cols = [col for col in display_cols if col in display_df.columns]
+
+            st.dataframe(
+                display_df[available_cols].sort_values("Execution Date", ascending=False),
+                use_container_width=True,
+                height=400
+            )
+
+            # Export option
+            csv = display_df[available_cols].to_csv(index=False)
+            st.download_button(
+                label="📥 Download as CSV",
+                data=csv,
+                file_name=f"{platform}_executions.csv",
+                mime="text/csv"
+            )
+
     else:
-        st.info("No execution data available.")
+        st.info("No execution data available. Run some tests to see platform statistics.")
 
 # ============================================================
 # TAB 3 — ANALYTICS
@@ -1353,7 +1911,7 @@ with coverage_matrix_grouped_tab:
 
                 for category in categories_in_data:
                     category_data = history_data[history_data["Test Category"] == category]
-                    
+
                     # Sort by execution date descending (latest first - queue order)
                     category_data = category_data.sort_values("Execution Date", ascending=False)
 
@@ -1368,7 +1926,7 @@ with coverage_matrix_grouped_tab:
                         <div class="category-header">
                             📁 {category}
                             <span style="font-size: 12px; color: #888; font-weight: normal;">
-                                ({len(category_data)} executions | 
+                                ({len(category_data)} executions |
                                 ✅ {cat_pass} | ❌ {cat_fail} | 🔄 {cat_progress} | ⏳ {cat_scheduled})
                             </span>
                         </div>
@@ -1376,19 +1934,18 @@ with coverage_matrix_grouped_tab:
                     """, unsafe_allow_html=True)
 
                     # Display cards in horizontal queue (latest on left)
-                    # Use columns for horizontal layout - show all cards in a scrollable row
                     num_cards = len(category_data)
-                    
+
                     if num_cards > 0:
                         # Create a container for horizontal scrolling
                         with st.container():
                             # Determine number of columns (max 6 visible, rest scrollable)
                             visible_cols = min(6, num_cards)
                             cols = st.columns(visible_cols)
-                            
+
                             for card_idx, (df_idx, row) in enumerate(category_data.iterrows()):
                                 col_idx = card_idx % visible_cols
-                                
+
                                 with cols[col_idx]:
                                     result = row["Result"]
                                     execution_id = row["Execution ID"]
@@ -1639,14 +2196,14 @@ with coverage_matrix_grouped_tab:
                             # If there are more cards than visible columns, show remaining in next rows
                             if num_cards > visible_cols:
                                 remaining_cards = list(category_data.iterrows())[visible_cols:]
-                                
+
                                 for batch_start in range(0, len(remaining_cards), visible_cols):
                                     batch = remaining_cards[batch_start:batch_start + visible_cols]
                                     cols = st.columns(visible_cols)
-                                    
+
                                     for batch_idx, (df_idx, row) in enumerate(batch):
                                         card_idx = visible_cols + batch_start + batch_idx
-                                        
+
                                         with cols[batch_idx]:
                                             result = row["Result"]
                                             execution_id = row["Execution ID"]
